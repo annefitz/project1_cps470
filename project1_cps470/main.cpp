@@ -20,14 +20,13 @@ int main(int argc, char* argv[])
 	Winsock ws; 
 
 	// parse url to get host name, port, path, and so on.
-	string url = "https://www.reddit.com/r/UnixPorn"; 
+	string url = "http://www.reddit.com/r/AnimalsBeingDerps"; 
 	URLParser parser(url);
 	string host = parser.getHost();
 	string path = parser.getPath();
 	short port = parser.getPort();
 
-	std::cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
-
+	cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
 
 	ws.createTCPSocket();
 

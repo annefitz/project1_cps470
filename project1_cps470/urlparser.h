@@ -25,13 +25,26 @@ public:
 	string getHost()
 	{
 		// implement here, you may use url.find(...) 
-		int start = url.find('.') + 1;
-		int stop = url.find('/', start);
+		int start;
+		if (url.find("//www.") == -1) {
+			start = url.find("/"); start = url.find("/", start+1);
+		}
+		else {
+			start = url.find('.');
+		}
 
-		// std::cout << "start: " << start << " end: " << end << "\n";
+		int stop = url.find('/', start+1); // check after the starting index
+		if (stop == -1) {
+			stop = url.size();
+		}
 
-		if (stop != -1) {
-			host = url.substr(start, stop-start);
+		//std::cout << "start: " << start << " end: " << stop << "\n";
+
+		if (start != -1) {
+			host = url.substr(start + 1, stop - start - 1);
+		}
+		else {
+			cout << "Bad hostname.\n";
 		}
 		
 		return host;
@@ -44,10 +57,10 @@ public:
 		string sPort = ""; 
 
 		// implement here: find substring that represents the port number
-		int start = url.find(':', 8) + 1;
-		int stop = url.find('/', 8) - 1;
-		if (start != 0) { // 0 because -1 is the error code, but adding 1 above
-			sPort = url.substr(start, stop - start);
+		int start = url.find(':', 8);
+		int stop = url.find('/', 8);
+		if (start != -1) { // 0 because -1 is the error code, but adding 1 above
+			sPort = url.substr(start + 1, stop - start - 1);
 		}
 		else {
 			sPort = "80";
@@ -64,12 +77,12 @@ public:
 	string getPath()
 	{
 		// implement here
-		int start = url.find('/', 8) + 1;
-		int stop = url.find('?', 8) - 1;
+		int start = url.find('/', 8);
+		int stop = url.find('?', 8);
 		
 		if (start != -1) {
-		std::cout << "start: " << start << "\n" << "end: " << stop << "\n";
-			path = url.substr(start, stop - start);
+		// std::cout << "start: " << start << "\n" << "end: " << stop << "\n";
+			path = url.substr(start + 1, stop - start - 1);
 		}
 		else {
 			path = "/";
@@ -82,10 +95,10 @@ public:
 	string getQuery()
 	{
 		// implement here
-		int start = url.find('?', 8) + 1;
+		int start = url.find('?', 8);
 		int stop = url.size();
 		if (start != -1) {
-			query = url.substr(start, stop - start);
+			query = url.substr(start + 1, stop - start);
 		}
 		return query;
 	}
