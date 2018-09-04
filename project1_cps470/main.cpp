@@ -35,12 +35,12 @@ int main(int argc, char* argv[])
 	}
 	// construct a GET or HEAD request (in a string), send request
 	if (ws.sendRequest(host, path)) {
-		std::cout << "request success\n";
+		//std::cout << "request success\n";
 	}
 	// receive reply
 	string reply = "";
 	if (ws.receive(reply)) {
-		std::cout << "reply success\n";
+		//std::cout << "reply success\n";
 		std::cout << reply;
 	}
 
