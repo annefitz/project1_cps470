@@ -145,8 +145,18 @@ public:
 	}
 
 	// define your sendRequest(...) function, to send a HEAD or GET request
-	
-	// anne fitz github test!
+	bool sendRequest(string host, string path) 
+	{
+		string sendstring = "GET /" + path + "HTTP/1.0\nUser-agent:UDCScrawler/1.0\nHost:" + host + "\nConnection: close" + "\n\n";
+		int size = sendstring.length();
+		if (send(sock, sendstring.c_str(), size, 0) == SOCKET_ERROR)
+		{
+			printf("send() error - %d\n", WSAGetLastError());
+			return false;
+		}
+		return true;
+	}
+
 	// define your receive(...) function, to receive the reply from the server
 	bool receive(string & recv_string)
 	{
