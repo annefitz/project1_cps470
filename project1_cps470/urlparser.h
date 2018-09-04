@@ -25,7 +25,7 @@ public:
 	string getHost()
 	{
 		// implement here, you may use url.find(...) 
-		int start = url.find("//") + 2;
+		int start = url.find('.') + 1;
 		int stop = url.find('/', start);
 
 		// std::cout << "start: " << start << " end: " << end << "\n";
@@ -33,7 +33,7 @@ public:
 		if (stop != -1) {
 			host = url.substr(start, stop-start);
 		}
-
+		
 		return host;
 	}
 
@@ -44,10 +44,10 @@ public:
 		string sPort = ""; 
 
 		// implement here: find substring that represents the port number
-		int start = url.find(':', 8);
-		int stop = url.find('/', 8);
-		if (start != -1) {
-			sPort = url.substr(start + 1, stop - start - 1);
+		int start = url.find(':', 8) + 1;
+		int stop = url.find('/', 8) - 1;
+		if (start != 0) { // 0 because -1 is the error code, but adding 1 above
+			sPort = url.substr(start, stop - start);
 		}
 		else {
 			sPort = "80";
@@ -64,12 +64,12 @@ public:
 	string getPath()
 	{
 		// implement here
-		int start = url.find('/', 8);
-		int stop = url.find('?', 8);
+		int start = url.find('/', 8) + 1;
+		int stop = url.find('?', 8) - 1;
 		
 		if (start != -1) {
 		std::cout << "start: " << start << "\n" << "end: " << stop << "\n";
-			path = url.substr(start + 1, stop - start - 1);
+			path = url.substr(start, stop - start);
 		}
 		else {
 			path = "/";
@@ -82,10 +82,10 @@ public:
 	string getQuery()
 	{
 		// implement here
-		int start = url.find('?', 8);
+		int start = url.find('?', 8) + 1;
 		int stop = url.size();
 		if (start != -1) {
-			query = url.substr(start + 1, stop - start - 1);
+			query = url.substr(start, stop - start);
 		}
 		return query;
 	}

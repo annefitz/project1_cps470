@@ -20,47 +20,29 @@ int main(int argc, char* argv[])
 	Winsock ws; 
 
 	// parse url to get host name, port, path, and so on.
-	string url = "https://www.udayton.edu/apply/index.php"; 
+	string url = "https://www.reddit.com/r/UnixPorn"; 
 	URLParser parser(url);
 	string host = parser.getHost();
 	string path = parser.getPath();
 	short port = parser.getPort();
 
+	std::cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
+
 
 	ws.createTCPSocket();
-
-	// the following shows how to use winsock functions
-
-	//string host = "www.yahoo.com";
-	ws.createTCPSocket();
-	ws.connectToServer(host0, port);
-	// construct a GET or HEAD request (in a string), send request
-
-	// receive reply
-
-	ws.closeSocket(); 
 
 	if (ws.connectToServer(host, port) != 0) {
 
 	}
 	// construct a GET or HEAD request (in a string), send request
 	if (ws.sendRequest(host, path)) {
-
-	//string hostIP = "131.238.72.77";  // udayton.edu's IP
-	//ws.createTCPSocket();
-	//ws.connectToServerIP(hostIP, port);
-	// construct a GET or HEAD request (in a string), send request
-	// receive reply
-	//ws.closeSocket();
-
-
-	printf("-----------------\n");
-
+		std::cout << "request success\n";
 	}
 	// receive reply
 	string reply = "";
 	if (ws.receive(reply)) {
-
+		std::cout << "reply success\n";
+		std::cout << reply;
 	}
 
 	ws.closeSocket();
