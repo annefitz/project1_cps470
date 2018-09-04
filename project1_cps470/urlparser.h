@@ -25,8 +25,16 @@ public:
 	string getHost()
 	{
 		// implement here, you may use url.find(...) 
+		int start = url.find("//") + 2;
+		int stop = url.find('/', start);
 
-		return host; 
+		// std::cout << "start: " << start << " end: " << end << "\n";
+
+		if (stop != -1) {
+			host = url.substr(start, stop-start);
+		}
+
+		return host;
 	}
 
 	// e.g., url: "http://cs.somepage.edu:467/index.php?addrbook.php"
@@ -36,6 +44,14 @@ public:
 		string sPort = ""; 
 
 		// implement here: find substring that represents the port number
+		int start = url.find(':', 8);
+		int stop = url.find('/', 8);
+		if (start != -1) {
+			sPort = url.substr(start + 1, stop - start - 1);
+		}
+		else {
+			sPort = "80";
+		}
 
 		if (sPort.length() > 0)
 			port = atoi(sPort.c_str());  // convert substring sPort to an integer value
@@ -48,8 +64,17 @@ public:
 	string getPath()
 	{
 		// implement here
-	
-		return path; 
+		int start = url.find('/', 8);
+		int stop = url.find('?', 8);
+		
+		if (start != -1) {
+		std::cout << "start: " << start << "\n" << "end: " << stop << "\n";
+			path = url.substr(start + 1, stop - start - 1);
+		}
+		else {
+			path = "/";
+		}
+		return path;
 	}
 
 	// url: "http://cs.somepage.edu:467/index.php?addrbook.php"
@@ -57,7 +82,11 @@ public:
 	string getQuery()
 	{
 		// implement here
-
+		int start = url.find('?', 8);
+		int stop = url.size();
+		if (start != -1) {
+			query = url.substr(start + 1, stop - start - 1);
+		}
 		return query;
 	}
 
