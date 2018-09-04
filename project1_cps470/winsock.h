@@ -146,6 +146,7 @@ public:
 
 	// define your sendRequest(...) function, to send a HEAD or GET request
 	
+	// anne fitz github test!
 	// define your receive(...) function, to receive the reply from the server
 	bool receive(string & recv_string)
 	{
