@@ -8,6 +8,7 @@
 
 #include <stdio.h>  // for printf
 #include <iostream> // for cin, cout
+#include <fstream>
 #include <string>
 #include <unordered_set>  // this is Hash Table, used to check ip/host uniqueness
 

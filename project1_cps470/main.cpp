@@ -19,6 +19,12 @@ int main(int argc, char* argv[])
 
 	Winsock ws; 
 
+	// File I/O
+	ifstream fin;
+	ofstream fout;
+	fin.open(FILENAME HERE);
+
+
 	// parse url to get host name, port, path, and so on.
 	string url = "http://www.reddit.com/r/AnimalsBeingDerps"; 
 	URLParser parser(url);
