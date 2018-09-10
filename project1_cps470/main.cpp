@@ -19,11 +19,28 @@ int main(int argc, char* argv[])
 
 	Winsock ws; 
 
+	// Get filename from commandline
+	string filename = argv[2];
+	cout << "Filename: " << filename << "\n";
+
 	// File I/O
 	ifstream fin;
-	ofstream fout;
-	fin.open(FILENAME HERE);
+	fin.open(filename);
+	string turl = "";
 
+	queue<string> Q;
+
+	if (fin.fail()) {
+		printf("File failed to open.\n");
+		return 0;
+	}
+	while (!fin.eof()) {
+		fin >> turl;
+		cout << turl << endl;
+		Q.push(turl);
+	}
+
+	fin.close();
 
 	// parse url to get host name, port, path, and so on.
 	string url = "http://www.reddit.com/r/AnimalsBeingDerps"; 
