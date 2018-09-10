@@ -3,11 +3,8 @@
 #include "winsock.h"
 #include "common.h"
 #include "urlparser.h"
+#include "main.h"
 
-//void update(string  & s)
-//{
-//	s = ""; 
-//}
 
 int main(int argc, char* argv[])
 {
@@ -17,7 +14,7 @@ int main(int argc, char* argv[])
 
 	// Get filename from commandline
 	string filename = argv[2];
-	int numThreads = (int)argv[1];
+	int const num_threads = (int)argv[1];
 	cout << "Filename: " << filename << "\n";
 
 	// File I/O
@@ -32,7 +29,7 @@ int main(int argc, char* argv[])
 	fin.open(filename);
 	string turl = "";
 
-	queue<string> Q;
+	queue<string> outputQ;
 
 	if (fin.fail()) {
 		printf("File failed to open.\n");
@@ -40,14 +37,24 @@ int main(int argc, char* argv[])
 	}
 
 	string turl = "";
-	queue<string> Q;
+	queue<string> inputQ;
 	while (!fin.eof()) {
 		fin >> turl;
 		cout << turl << endl;
-		Q.push(turl);
+		inputQ.push(turl);
 	}
 
 	fin.close();
+
+	mutex m;
+
+	// threading
+	Parameters p;
+	p.num_tasks = 0;
+	p.inputQ = &inputQ;
+	p.mutex = &m;
+	thread t[num_threads];
+
 
 	// parse url to get host name, port, path, and so on.
 	URLParser parser(url);

@@ -8,7 +8,8 @@ public:
 	HANDLE mutex;
 	HANDLE finished;
 	HANDLE eventQuit;
-	HANDLE semaQ;
+	HANDLE inputQ;
+	HANDLE outputQ;
 	int num_tasks;
 };
 
@@ -22,7 +23,7 @@ static UINT thread(LPVOID pParam)
 	printf("Thread %d started\n", GetCurrentThreadId());		// always print inside critical section to avoid screen garbage
 	ReleaseMutex(p->mutex);										// release critical section
 
-	HANDLE	arr[] = { p->eventQuit, p->semaQ };
+	HANDLE	arr[] = { p->eventQuit, p->inputQ };
 	while (true)
 	{
 		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled 
@@ -35,7 +36,7 @@ static UINT thread(LPVOID pParam)
 			// ------------- entered the critical section ------------------
 			Sleep(1000);  // let this thread sleep for 1 second, just for code demonstration
 
-							// p->active_threads ++; 
+							// p->active_threads ++;
 							// get the item from the inputQ
 
 							// return mutex
@@ -72,3 +73,6 @@ static UINT thread(LPVOID pParam)
 	return 0;
 }
 
+// function to spawn threads
+public:
+UINT spawnThreads(int num_threads, string filename, queue)
