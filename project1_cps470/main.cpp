@@ -11,10 +11,6 @@
 
 int main(int argc, char* argv[])
 {
-	//string testString = "Hello"; 
-	//update(testString);
-	//cout << testString << endl; 
-
 	Winsock::initialize();	// initialize 
 
 	Winsock ws; 
@@ -22,11 +18,24 @@ int main(int argc, char* argv[])
 	// File I/O
 	ifstream fin;
 	ofstream fout;
-	fin.open(FILENAME HERE);
+	fin.open("URL-input-100.txt");
+	fout.open("crawldata.txt");
+	string url = "";
+	if (fin.fail()) {
+		printf("No such file. Failed to open.\n"); 
+		return;
+	}
+
+	// push all URLs onto queue
+	queue<string> Q;
+	while (!fin.eof()) {
+		fin >> url; // read a single string in
+		cout << url << endl; // print for debugging
+		Q.push(url);
+	}
 
 
 	// parse url to get host name, port, path, and so on.
-	string url = "http://www.reddit.com/r/AnimalsBeingDerps"; 
 	URLParser parser(url);
 	string host = parser.getHost();
 	string path = parser.getPath();
