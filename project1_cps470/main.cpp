@@ -3,7 +3,6 @@
 #include "winsock.h"
 #include "common.h"
 #include "urlparser.h"
-#include "main.h"
 
 
 int main(int argc, char* argv[])
@@ -13,51 +12,52 @@ int main(int argc, char* argv[])
 	Winsock ws; 
 
 	// Get filename from commandline
+	const int num_threads = atoi(argv[1]);
 	string filename = argv[2];
-	int const num_threads = (int)argv[1];
 	cout << "Filename: " << filename << "\n";
 
 	// File I/O
 	ifstream fin;
-
-	ofstream fout;
 	fin.open(filename);
-	fout.open("crawldata.txt");
-
-	// push all URLs onto queue
-
-	fin.open(filename);
-	string turl = "";
-
-	queue<string> outputQ;
 
 	if (fin.fail()) {
 		printf("File failed to open.\n");
 		return 1;
 	}
 
+	// push all URLs onto queue
 	string turl = "";
-	queue<string> inputQ;
+	queue<string> Q;
 	while (!fin.eof()) {
 		fin >> turl;
 		cout << turl << endl;
-		inputQ.push(turl);
+		Q.push(turl);
 	}
+	Q.push("-1"); // indicator of the start of output
 
 	fin.close();
 
-	mutex m;
+	mutex print_m;
+	mutex q_m;
 
 	// threading
 	Parameters p;
 	p.num_tasks = 0;
-	p.inputQ = &inputQ;
-	p.mutex = &m;
-	thread t[num_threads];
-
+	p.qq = &Q;
+	p.print_mutex = &print_m;
+	p.q_mutex = &q_m;
+	thread t[1];
+	// spawn each thread and store them in the thread array
+	for (int i = 0; i < num_threads; i++) {
+		t[i] = thread(thread_fun, i, ref(p));
+	}
+	// wait for threads to terminate
+	for (int i = 0; i < num_threads; i++) {
+		t[i].join();
+	}
 
 	// parse url to get host name, port, path, and so on.
-	URLParser parser(url);
+	URLParser parser(turl);
 	string host = parser.getHost();
 	string path = parser.getPath();
 	short port = parser.getPort();
