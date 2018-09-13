@@ -57,8 +57,8 @@ public:
 		string sPort = ""; 
 
 		// implement here: find substring that represents the port number
-		int start = url.find(':', 8);
 		int stop = url.find('/', 8);
+		int start = (url.substr(0,stop)).find(':', 8);
 		if (start != -1) { // 0 because -1 is the error code, but adding 1 above
 			sPort = url.substr(start + 1, stop - start - 1);
 		}

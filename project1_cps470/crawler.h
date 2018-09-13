@@ -38,8 +38,8 @@ static UINT thread_fun(LPVOID pParam)
 		{
 			// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
-			// ------------- entered the critical section ------------------
-			Sleep(1000);  // let this thread sleep for 1 second, just for code demonstration
+
+			// ------------- entered the critical section ---------------
 
 			string url = p->inq->front(); // get the item from the inputQ
 			p->inq->pop();
@@ -72,10 +72,12 @@ static UINT thread_fun(LPVOID pParam)
 			}
 			// receive reply
 			string reply = "";
+
 			if (ws.receive(reply)) {
 				//std::cout << "reply success\n";
-				std::cout << reply;
+				//std::cout << reply;
 			}
+
 			else {
 				std::cout << "Unsuccessful reply.\n";
 			}
@@ -95,10 +97,10 @@ static UINT thread_fun(LPVOID pParam)
 			if (p->num_tasks == 0)
 				SetEvent(p->eventQuit);
 
-			Sleep(1000);	// let this thread sleep for 1 second, just for code demonstration		
 
 			ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-										// ------------- left the critical section ------------------		
+										// ------------- left the critical section ------------------	
+			Sleep(5000);
 		}
 	} // end of while loop for this thread
 	ws.closeSocket();
@@ -109,4 +111,9 @@ static UINT thread_fun(LPVOID pParam)
 	ReleaseSemaphore(p->finished, 1, NULL);
 
 	return 0;
+}
+
+static UINT timeout(HANDLE timesUp, int timeout) {
+	Sleep(timeout);
+	SetEvent(timesUp);
 }

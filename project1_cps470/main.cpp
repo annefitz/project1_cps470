@@ -55,35 +55,6 @@ int main(int argc, char* argv[])
 		WaitForSingleObject(p.eventQuit, INFINITE);
 	}
 
-/*	// parse url to get host name, port, path, and so on.
-	URLParser parser(turl);
-	string host = parser.getHost();
-	string path = parser.getPath();
-	short port = parser.getPort();
-
-	cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
-
-	ws.createTCPSocket();
-
-	if (ws.connectToServer(host, port) != 0) {
-
-	}
-	// construct a GET or HEAD request (in a string), send request
-	if (ws.sendRequest(host, path)) {
-		//std::cout << "request success\n";
-	}
-	// receive reply
-	string reply = "";
-	if (ws.receive(reply)) {
-		//std::cout << "reply success\n";
-		std::cout << reply;
-	}
-
-	ws.closeSocket();
-	
-
-	Winsock::cleanUp(); */
-
 	printf("Enter any key to continue ...\n"); 
 	getchar(); 
 
