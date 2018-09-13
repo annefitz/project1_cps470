@@ -7,9 +7,6 @@
 
 int main(int argc, char* argv[])
 {
-	Winsock::initialize();	// initialize 
-
-	Winsock ws; 
 
 	// Get filename from commandline
 	int num_threads = atoi(argv[1]);
@@ -27,11 +24,12 @@ int main(int argc, char* argv[])
 
 	// push all URLs onto queue
 	string turl = "";
-	queue<string> Q;
+	queue<string> inQ;
+	queue<string> outQ;
 	while (!fin.eof()) {
 		fin >> turl;
 		cout << turl << endl;
-		Q.push(turl);
+		inQ.push(turl);
 	}
 
 	fin.close();
@@ -41,8 +39,9 @@ int main(int argc, char* argv[])
 
 	// threading
 	Parameters p;
-	p.num_tasks = 0;
-	p.qq = &Q;
+	p.num_tasks = size(inQ);
+	p.inq = &inQ;
+	p.outq = &outQ;
 	p.print_mutex = &print_m;
 	p.q_mutex = &q_m;
 	HANDLE t[1];
@@ -56,7 +55,7 @@ int main(int argc, char* argv[])
 		WaitForSingleObject(p.eventQuit, INFINITE);
 	}
 
-	// parse url to get host name, port, path, and so on.
+/*	// parse url to get host name, port, path, and so on.
 	URLParser parser(turl);
 	string host = parser.getHost();
 	string path = parser.getPath();
@@ -83,7 +82,7 @@ int main(int argc, char* argv[])
 	ws.closeSocket();
 	
 
-	Winsock::cleanUp(); 
+	Winsock::cleanUp(); */
 
 	printf("Enter any key to continue ...\n"); 
 	getchar(); 
