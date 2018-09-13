@@ -26,12 +26,9 @@ public:
 	{
 		// implement here, you may use url.find(...) 
 		int start;
-		if (url.find("//www.") == -1) {
-			start = url.find("/"); start = url.find("/", start+1);
-		}
-		else {
-			start = url.find('.');
-		}
+		
+		start = url.find("/"); start = url.find("/", start+1);
+		
 
 		int stop = url.find('/', start+1); // check after the starting index
 		if (stop == -1) {
