@@ -42,15 +42,14 @@ public:
 	}
 
 	// connect to host (e.g., "www.google.com", or "121.223.12.2") on given port (e.g., 80)
-<<<<<<< HEAD
-	int connectToServer(string host, short port, HANDLE mutex)
-=======
-	int connectToServer(string host, short port, HANDLE print_mutex)
->>>>>>> a54a04f31f8c94e0dba803dd9184e315abfe0db1
+
+	int connectToServer(string host, short port, HANDLE print_mutex, int print)
 	{
-		WaitForSingleObject(print_mutex, INFINITE);
-		cout << "\tDoing DNS... ";
-		ReleaseMutex(print_mutex);
+		if (print == 1) {
+			WaitForSingleObject(print_mutex, INFINITE);
+			cout << "\tDoing DNS... ";
+			ReleaseMutex(print_mutex);
+		}
 
 		// starting timer
 		auto start = high_resolution_clock::now();
@@ -95,10 +94,12 @@ public:
 
 		auto stop = high_resolution_clock::now();
 		auto duration = duration_cast<milliseconds>(stop - start);
-		WaitForSingleObject(print_mutex, INFINITE);
-		cout << "done in " << duration.count() << "ms, found " << inet_ntoa(server.sin_addr) << "\n";
-		//printf("Successfully connected to %s (%s) on port %d\n", host.c_str(), inet_ntoa(server.sin_addr), htons(server.sin_port));
-		ReleaseMutex(print_mutex);
+		if (print == 1) {
+			WaitForSingleObject(print_mutex, INFINITE);
+			cout << "done in " << duration.count() << "ms, found " << inet_ntoa(server.sin_addr) << "\n";
+			//printf("Successfully connected to %s (%s) on port %d\n", host.c_str(), inet_ntoa(server.sin_addr), htons(server.sin_port));
+			ReleaseMutex(print_mutex);
+		}
 		return 0; 
 	}
 
@@ -166,7 +167,7 @@ public:
 	}
 
 	// define your sendRequest(...) function, to send a HEAD or GET request
-	bool sendGETRequest(string host, string path) 
+	bool sendGETRequest(string host, string path)
 	{
 		string sendstring = "GET /" + path + "HTTP/1.0\nUser-agent:UDCScrawler/1.0\nHost:" + host + "\nConnection: close" + "\n\n";
 		int size = sendstring.length();

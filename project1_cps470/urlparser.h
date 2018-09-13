@@ -26,13 +26,8 @@ public:
 	{
 		// implement here, you may use url.find(...) 
 		int start;
-<<<<<<< HEAD
-		start = url.find("/"); start = url.find("/", start+1);
-=======
 		
 		start = url.find("/"); start = url.find("/", start+1);
-		
->>>>>>> a54a04f31f8c94e0dba803dd9184e315abfe0db1
 
 		int stop = url.find('/', start+1); // check after the starting index
 		if (stop == -1) {

@@ -15,13 +15,13 @@ int main(int argc, char* argv[])
 	// File I/O
 	ifstream fin;
 	fin.open(filename);
-	cout << "Opened " << filename << "\n";
+	
 	if (fin.fail()) {
 		printf("File failed to open.\n");
 		return 1;
 	}
 	else {
-		printf("Opened file %s", filename);
+		cout << "Opened " << filename << "\n";
 	}
 
 	// push all URLs onto queue
