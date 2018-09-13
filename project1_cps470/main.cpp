@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 	Winsock ws; 
 
 	// Get filename from commandline
-	const int num_threads = atoi(argv[1]);
+	int num_threads = atoi(argv[1]);
 	string filename = argv[2];
 	cout << "Filename: " << filename << "\n";
 
@@ -33,7 +33,6 @@ int main(int argc, char* argv[])
 		cout << turl << endl;
 		Q.push(turl);
 	}
-	Q.push("-1"); // indicator of the start of output
 
 	fin.close();
 
@@ -46,14 +45,15 @@ int main(int argc, char* argv[])
 	p.qq = &Q;
 	p.print_mutex = &print_m;
 	p.q_mutex = &q_m;
-	thread t[1];
+	HANDLE t[1];
 	// spawn each thread and store them in the thread array
 	for (int i = 0; i < num_threads; i++) {
-		t[i] = thread(thread_fun, i, ref(p));
+		// t[i] = thread(thread_fun, i, ref(p));
+		t[i] = CreateThread(NULL, 4096, (LPTHREAD_START_ROUTINE)thread_fun, &p, 0, NULL);
 	}
 	// wait for threads to terminate
 	for (int i = 0; i < num_threads; i++) {
-		t[i].join();
+		WaitForSingleObject(p.eventQuit, INFINITE);
 	}
 
 	// parse url to get host name, port, path, and so on.

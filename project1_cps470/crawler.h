@@ -15,15 +15,14 @@ public:
 	int num_tasks;
 };
 
-// this function is where the thread starts
 static UINT thread_fun(LPVOID pParam)
 {
 	Parameters *p = ((Parameters*)pParam);
 
 	// wait for mutex, then print and sleep inside the critical section
-	WaitForSingleObject(p->print_mutex, INFINITE);					// lock mutex
+	WaitForSingleObject(p->print_mutex, INFINITE);				// lock mutex
 	printf("Thread %d started\n", GetCurrentThreadId());		// always print inside critical section to avoid screen garbage
-	ReleaseMutex(p->print_mutex);										// release critical section
+	ReleaseMutex(p->print_mutex);								// release critical section
 
 	HANDLE	arr[] = { p->eventQuit, p->qq };
 
@@ -40,7 +39,7 @@ static UINT thread_fun(LPVOID pParam)
 			// ------------- entered the critical section ------------------
 			Sleep(1000);  // let this thread sleep for 1 second, just for code demonstration
 
-			string url = p->qq.pop(); // get the item from the inputQ
+			//string url = p->qq.pop(); // get the item from the inputQ
 			p->num_tasks++; // p->active_threads ++;
 
 							// return mutex
@@ -48,7 +47,7 @@ static UINT thread_fun(LPVOID pParam)
 			// ------------- left the critical section ------------------		
 
 			// parse url
-			URLParser parser(url);
+			/*URLParser parser(url);
 			string host = parser.getHost();
 			string path = parser.getPath();
 			short port = parser.getPort();
@@ -78,14 +77,14 @@ static UINT thread_fun(LPVOID pParam)
 
 			ws.closeSocket();
 
-			Winsock::cleanUp();
+			Winsock::cleanUp();*/
 
 							// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
 			// ------------- entered the critical section ------------------
 
 			// write results into outputQ
-			p->qq.push(reply);
+			//p->qq.push(reply);
 
 			// p->active_threads --;
 			p->num_tasks--;
