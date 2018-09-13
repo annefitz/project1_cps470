@@ -33,7 +33,6 @@ int main(int argc, char* argv[])
 		cout << turl << endl;
 		Q.push(turl);
 	}
-	Q.push("-1"); // indicator of the start of output
 
 	fin.close();
 
@@ -46,15 +45,17 @@ int main(int argc, char* argv[])
 	p.qq = &Q;
 	p.print_mutex = &print_m;
 	p.q_mutex = &q_m;
-	thread t[1];
+	thread t(thread_fun, 1, ref(p));
+	//thread t[1];
 	// spawn each thread and store them in the thread array
-	for (int i = 0; i < num_threads; i++) {
-		t[i] = thread(thread_fun, i, ref(p));
-	}
+	//for (int i = 0; i < num_threads; i++) {
+		//t[i] = thread(thread_fun, i, ref(p));
+	//}
 	// wait for threads to terminate
-	for (int i = 0; i < num_threads; i++) {
-		t[i].join();
-	}
+	//for (int i = 0; i < num_threads; i++) {
+		//t[i].join();
+	//}
+	t.join();
 
 	// parse url to get host name, port, path, and so on.
 	URLParser parser(turl);

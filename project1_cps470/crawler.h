@@ -15,15 +15,16 @@ public:
 	int num_tasks;
 };
 
-// this function is where the thread starts
 static UINT thread_fun(LPVOID pParam)
 {
+	cout << "INSIDE THREAD_FUN \n";
+	
 	Parameters *p = ((Parameters*)pParam);
 
 	// wait for mutex, then print and sleep inside the critical section
-	WaitForSingleObject(p->print_mutex, INFINITE);					// lock mutex
+	WaitForSingleObject(p->print_mutex, INFINITE);				// lock mutex
 	printf("Thread %d started\n", GetCurrentThreadId());		// always print inside critical section to avoid screen garbage
-	ReleaseMutex(p->print_mutex);										// release critical section
+	ReleaseMutex(p->print_mutex);								// release critical section
 
 	HANDLE	arr[] = { p->eventQuit, p->qq };
 
@@ -47,6 +48,7 @@ static UINT thread_fun(LPVOID pParam)
 			ReleaseMutex(p->q_mutex);
 			// ------------- left the critical section ------------------		
 
+			//string url = "www.google.com";
 			// parse url
 			URLParser parser(url);
 			string host = parser.getHost();
@@ -78,14 +80,14 @@ static UINT thread_fun(LPVOID pParam)
 
 			ws.closeSocket();
 
-			Winsock::cleanUp();
+			Winsock::cleanUp();*/
 
 							// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
 			// ------------- entered the critical section ------------------
 
 			// write results into outputQ
-			p->qq.push(reply);
+			//p->qq.push(reply);
 
 			// p->active_threads --;
 			p->num_tasks--;
