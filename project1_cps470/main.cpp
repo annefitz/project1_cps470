@@ -15,11 +15,7 @@ int main(int argc, char* argv[])
 	// File I/O
 	ifstream fin;
 	fin.open(filename);
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> 7c53aab45b6b04a7237b1ffec69a0a3485a7cc27
 	if (fin.fail()) {
 		cout << "File failed to open.\n";
 		return 1;
