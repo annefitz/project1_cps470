@@ -11,12 +11,11 @@ int main(int argc, char* argv[])
 	// Get filename from commandline
 	int num_threads = atoi(argv[1]);
 	string filename = argv[2];
-	cout << "Filename: " << filename << "\n";
 
 	// File I/O
 	ifstream fin;
 	fin.open(filename);
-
+	cout << "Opened " << filename << "\n";
 	if (fin.fail()) {
 		printf("File failed to open.\n");
 		return 1;
@@ -31,7 +30,7 @@ int main(int argc, char* argv[])
 	queue<string> outQ;
 	while (!fin.eof()) {
 		fin >> turl;
-		cout << turl << endl;
+		//cout << turl << endl;
 		inQ.push(turl);
 	}
 
@@ -58,7 +57,7 @@ int main(int argc, char* argv[])
 		WaitForSingleObject(p.eventQuit, INFINITE);
 	}
 
-	printf("Enter any key to continue ...\n"); 
+	//printf("Enter any key to continue ...\n"); 
 	getchar(); 
 
 	return 0;   // 0 means successful

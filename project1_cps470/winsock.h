@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h" 
 
+using namespace std::chrono;
+
 #define BUF_SIZE 1024
 #define TIMEOUT 20000
 // the .h file defines all windows socket functions 
@@ -40,8 +42,18 @@ public:
 	}
 
 	// connect to host (e.g., "www.google.com", or "121.223.12.2") on given port (e.g., 80)
+<<<<<<< HEAD
 	int connectToServer(string host, short port, HANDLE mutex)
+=======
+	int connectToServer(string host, short port, HANDLE print_mutex)
+>>>>>>> a54a04f31f8c94e0dba803dd9184e315abfe0db1
 	{
+		WaitForSingleObject(print_mutex, INFINITE);
+		cout << "\tDoing DNS... ";
+		ReleaseMutex(print_mutex);
+
+		// starting timer
+		auto start = high_resolution_clock::now();
 		// structure for connecting to server
 		struct sockaddr_in server;
 
@@ -55,7 +67,9 @@ public:
 			// if not a valid IP, then do a DNS lookup
 			if ((remote = gethostbyname(host.c_str())) == NULL)
 			{
+				WaitForSingleObject(print_mutex, INFINITE);
 				printf("Invalid string: neither FQDN, nor IP address\n");
+				ReleaseMutex(print_mutex);
 				return 1;  // 1 means failure
 			}
 			else // take the first IP address and copy into sin_addr
@@ -73,11 +87,18 @@ public:
 		// connect to the server on that port 
 		if (connect(sock, (struct sockaddr*) &server, sizeof(struct sockaddr_in)) == SOCKET_ERROR)
 		{
+			WaitForSingleObject(print_mutex, INFINITE);
 			printf("Connection error: %d\n", WSAGetLastError());
+			ReleaseMutex(print_mutex);
 			return 1;
 		}
 
-		printf("Successfully connected to %s (%s) on port %d\n", host.c_str(), inet_ntoa(server.sin_addr), htons(server.sin_port));
+		auto stop = high_resolution_clock::now();
+		auto duration = duration_cast<milliseconds>(stop - start);
+		WaitForSingleObject(print_mutex, INFINITE);
+		cout << "done in " << duration.count() << "ms, found " << inet_ntoa(server.sin_addr) << "\n";
+		//printf("Successfully connected to %s (%s) on port %d\n", host.c_str(), inet_ntoa(server.sin_addr), htons(server.sin_port));
+		ReleaseMutex(print_mutex);
 		return 0; 
 	}
 

@@ -42,6 +42,9 @@ static UINT thread_fun(LPVOID pParam)
 			// ------------- entered the critical section ---------------
 
 			string url = p->inq->front(); // get the item from the inputQ
+			WaitForSingleObject(p->print_mutex, INFINITE);
+			cout << "URL: " << url << "\n";
+			ReleaseMutex(p->print_mutex);
 			p->inq->pop();
 			p->num_tasks--;
 
@@ -57,14 +60,20 @@ static UINT thread_fun(LPVOID pParam)
 			string path = parser.getPath();
 			short port = parser.getPort();
 
-			cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
-
+			//cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
+			WaitForSingleObject(p->print_mutex, INFINITE);
+			cout << "\tParsing URL... host " << host << ", port " << port << "\n";
+			ReleaseMutex(p->print_mutex);
 			// delay here: contact a peer, send a request, and receive/parse the response 
 
 			ws.createTCPSocket();
 
 			if (ws.connectToServer(host, port, p->print_mutex) != 0) {
+<<<<<<< HEAD
 
+=======
+				//printf("Connection error: %d\n", WSAGetLastError());
+>>>>>>> a54a04f31f8c94e0dba803dd9184e315abfe0db1
 			}
 			// construct a GET or HEAD request (in a string), send request
 			if (ws.sendHEADRequest(host)) {
