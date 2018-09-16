@@ -40,7 +40,7 @@ public:
 	}
 
 	// connect to host (e.g., "www.google.com", or "121.223.12.2") on given port (e.g., 80)
-	int connectToServer(string host, short port)
+	int connectToServer(string host, short port, HANDLE mutex)
 	{
 		// structure for connecting to server
 		struct sockaddr_in server;
@@ -145,9 +145,22 @@ public:
 	}
 
 	// define your sendRequest(...) function, to send a HEAD or GET request
-	bool sendRequest(string host, string path) 
+	bool sendGETRequest(string host, string path) 
 	{
 		string sendstring = "GET /" + path + "HTTP/1.0\nUser-agent:UDCScrawler/1.0\nHost:" + host + "\nConnection: close" + "\n\n";
+		int size = sendstring.length();
+		if (send(sock, sendstring.c_str(), size, 0) == SOCKET_ERROR)
+		{
+			printf("send() error - %d\n", WSAGetLastError());
+			return false;
+		}
+		return true;
+	}
+
+	// HEAD request
+	bool sendHEADRequest(string host)
+	{
+		string sendstring = "HEAD /robots.txt HTTP/1.0\nHost: " + host + "\n\n";
 		int size = sendstring.length();
 		if (send(sock, sendstring.c_str(), size, 0) == SOCKET_ERROR)
 		{

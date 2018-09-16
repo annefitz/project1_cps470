@@ -63,27 +63,48 @@ static UINT thread_fun(LPVOID pParam)
 
 			ws.createTCPSocket();
 
-			if (ws.connectToServer(host, port) != 0) {
+			if (ws.connectToServer(host, port, p->print_mutex) != 0) {
 
 			}
 			// construct a GET or HEAD request (in a string), send request
-			if (ws.sendRequest(host, path)) {
-				//std::cout << "request success\n";
-			}
-			// receive reply
-			string reply = "";
+			if (ws.sendHEADRequest(host)) {
 
-			if (ws.receive(reply)) {
-				//std::cout << "reply success\n";
-				//std::cout << reply;
 			}
 
+			// receive HEAD reply
+			string HEADreply = "";
+			if (ws.receive(HEADreply)) {
+				//std::cout << "reply not success\n";
+				cout << HEADreply;
+			}
 			else {
-				std::cout << "Unsuccessful reply.\n";
+				cout << "Error in receiving reply from the host.\n";
 			}
 
+			// find the status code in the reply
+			int status_end_idx = HEADreply.find("\n");
+			string status_code_string = HEADreply.substr(9, status_end_idx);
+			int status_code = stoi(status_code_string.substr(0, 2));
 
-							// obtain ownership of the mutex
+			string reply = "";
+			// if the status code isn't 200, 
+			if (status_code != 200) {
+				if (ws.sendGETRequest(host, path)) {
+					//std::cout << "request success\n";
+				}
+
+				// receive reply
+				if (ws.receive(reply)) {
+					std::cout << "Reply received successfully.\n";
+					// std::cout << reply;
+				}
+				else {
+					std::cout << "Reply NOT received successfully.\n";
+				}
+			}
+
+			ws.closeSocket();
+			// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
 			// ------------- entered the critical section ------------------
 
@@ -99,21 +120,20 @@ static UINT thread_fun(LPVOID pParam)
 
 
 			ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-										// ------------- left the critical section ------------------	
-			Sleep(5000);
+										// ------------- left the critical section ------------------
+				
 		}
 	} // end of while loop for this thread
-	ws.closeSocket();
 
 	Winsock::cleanUp();
 
-		// signal that this thread is exiting 
+	// signal that this thread is exiting 
 	ReleaseSemaphore(p->finished, 1, NULL);
 
 	return 0;
 }
 
-static UINT timeout(HANDLE timesUp, int timeout) {
-	Sleep(timeout);
-	SetEvent(timesUp);
+static bool timeout(int time) {
+	Sleep(time);
+	return true;
 }

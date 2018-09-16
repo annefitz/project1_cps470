@@ -21,6 +21,9 @@ int main(int argc, char* argv[])
 		printf("File failed to open.\n");
 		return 1;
 	}
+	else {
+		printf("Opened file %s", filename);
+	}
 
 	// push all URLs onto queue
 	string turl = "";
