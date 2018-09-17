@@ -4,6 +4,8 @@
 #include "urlparser.h"
 #include "winsock.h"
 
+using namespace std::chrono;
+
 // this class is passed to all threads, acts as shared memory
 class Parameters {
 public:
@@ -66,29 +68,67 @@ static UINT thread_fun(LPVOID pParam)
 
 			ws.createTCPSocket();
 
+<<<<<<< HEAD
 			if (ws.connectToServer(host, port, p->print_mutex) == 2) {
 				ws.closeSocket();
 				continue;
+=======
+			if (ws.connectToServer(host, port, p->print_mutex, 1) != 0) {
+				//printf("Connection error: %d\n", WSAGetLastError());
+>>>>>>> 7c53aab45b6b04a7237b1ffec69a0a3485a7cc27
 			}
 			// construct a GET or HEAD request (in a string), send request
-			if (ws.sendHEADRequest(host)) {
+			// starting timer
+			auto stop = high_resolution_clock::now();
+			auto start = high_resolution_clock::now();
+			auto duration = duration_cast<milliseconds>(stop - start);
+			WaitForSingleObject(p->print_mutex, INFINITE);
+			cout << "\tConnecting on robots... ";
+			ReleaseMutex(p->print_mutex);
 
+			if (ws.sendHEADRequest(host)) {
+				stop = high_resolution_clock::now();
+				duration = duration_cast<milliseconds>(stop - start);
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "done in " << duration.count() << " ms\n";
+				ReleaseMutex(p->print_mutex);
+			}
+			else {
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "failed\n";
+				ReleaseMutex(p->print_mutex);
+				ws.closeSocket();
+				continue;
 			}
 
 			// receive HEAD reply
+			start = high_resolution_clock::now();
+			WaitForSingleObject(p->print_mutex, INFINITE);
+			cout << "\tLoading... ";
+			ReleaseMutex(p->print_mutex);
 			string HEADreply = "";
 			if (ws.receive(HEADreply)) {
 				//std::cout << "reply not success\n";
-				cout << HEADreply;
+				//cout << HEADreply;
+				stop = high_resolution_clock::now();
+				duration = duration_cast<milliseconds>(stop - start);
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "done in " << duration.count() << " ms with "<< HEADreply.size() << " bytes\n";
+				ReleaseMutex(p->print_mutex);
 			}
 			else {
-				cout << "Error in receiving reply from the host.\n";
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "failed\n";
+				ReleaseMutex(p->print_mutex);
+				ws.closeSocket();
+				continue;
 			}
 
 			// find the status code in the reply
 			int status_end_idx = HEADreply.find("\n");
 			string status_code_string = HEADreply.substr(9, status_end_idx);
 			int status_code = stoi(status_code_string.substr(0, 3));
+<<<<<<< HEAD
 			cout << "STATUS CODE:" << status_code << endl;
 			string reply = "";
 			// if the status is a 400, download and crawl the IP
@@ -101,15 +141,67 @@ static UINT thread_fun(LPVOID pParam)
 				if (ws.receive(reply)) {
 					cout << "Reply received successfully.\n";
 					cout << "GET REPLY: " << reply;
+=======
+			WaitForSingleObject(p->print_mutex, INFINITE);
+			cout << "\tVerifying header... status code " << status_code << "\n";
+			ReleaseMutex(p->print_mutex);
+
+			// if the status code is 400 or higher, 
+			if (status_code >= 400) {
+				ws.closeSocket();
+				ws.createTCPSocket();
+
+				if (ws.connectToServer(host, port, p->print_mutex, 0) != 0) {
+					//printf("Connection error: %d\n", WSAGetLastError());
+				}
+				start = high_resolution_clock::now();
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "\tConnecting on page... ";
+				ReleaseMutex(p->print_mutex);
+				if (ws.sendGETRequest(host, path)) {
+					//std::cout << "request success\n";
+					stop = high_resolution_clock::now();
+					duration = duration_cast<milliseconds>(stop - start);
+					WaitForSingleObject(p->print_mutex, INFINITE);
+					cout << "done in " << duration.count() << " ms\n";
+					ReleaseMutex(p->print_mutex);
+				}
+				else {
+					WaitForSingleObject(p->print_mutex, INFINITE);
+					cout << "failed\n";
+					ReleaseMutex(p->print_mutex);
+					ws.closeSocket();
+					continue;
+				}
+
+				// receive reply
+				start = high_resolution_clock::now();
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "\tLoading... ";
+				ReleaseMutex(p->print_mutex);
+				string GETreply = "";
+				if (ws.receive(GETreply)) {
+					stop = high_resolution_clock::now();
+					duration = duration_cast<milliseconds>(stop - start);
+					WaitForSingleObject(p->print_mutex, INFINITE);
+					cout << "done in " << duration.count() << " ms with " << GETreply.size() <<" bytes\n";
+					ReleaseMutex(p->print_mutex);
+>>>>>>> 7c53aab45b6b04a7237b1ffec69a0a3485a7cc27
 				}
 				else {
 					cout << "Reply NOT received successfully.\n";
 				}
 			}
 			else {
+<<<<<<< HEAD
 				// cout << "Further contact denied.\n"
 			}
 
+=======
+				ws.closeSocket();
+				continue;
+			}
+>>>>>>> 7c53aab45b6b04a7237b1ffec69a0a3485a7cc27
 			ws.closeSocket();
 
 			// obtain ownership of the mutex
@@ -117,7 +209,7 @@ static UINT thread_fun(LPVOID pParam)
 			// ------------- entered the critical section ------------------
 
 			// write results into outputQ
-			p->outq->push(reply);
+			//p->outq->push(GETreply);
 
 			// p->active_threads --;
 			//p->num_tasks--;
