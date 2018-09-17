@@ -48,8 +48,6 @@ static UINT thread_fun(LPVOID pParam)
 			p->inq->pop();
 			p->num_tasks--;
 
-			//p->num_tasks++; // p->active_threads ++;
-
 							// return mutex
 			ReleaseMutex(p->q_mutex);
 			// ------------- left the critical section ------------------		
@@ -68,12 +66,9 @@ static UINT thread_fun(LPVOID pParam)
 
 			ws.createTCPSocket();
 
-			if (ws.connectToServer(host, port, p->print_mutex) != 0) {
-<<<<<<< HEAD
-
-=======
-				//printf("Connection error: %d\n", WSAGetLastError());
->>>>>>> a54a04f31f8c94e0dba803dd9184e315abfe0db1
+			if (ws.connectToServer(host, port, p->print_mutex) == 2) {
+				ws.closeSocket();
+				continue;
 			}
 			// construct a GET or HEAD request (in a string), send request
 			if (ws.sendHEADRequest(host)) {
@@ -93,26 +88,30 @@ static UINT thread_fun(LPVOID pParam)
 			// find the status code in the reply
 			int status_end_idx = HEADreply.find("\n");
 			string status_code_string = HEADreply.substr(9, status_end_idx);
-			int status_code = stoi(status_code_string.substr(0, 2));
-
+			int status_code = stoi(status_code_string.substr(0, 3));
+			cout << "STATUS CODE:" << status_code << endl;
 			string reply = "";
-			// if the status code isn't 200, 
-			if (status_code != 200) {
+			// if the status is a 400, download and crawl the IP
+			if (status_code >= 400) {
 				if (ws.sendGETRequest(host, path)) {
-					//std::cout << "request success\n";
+					cout << "\n:TEST:\n";
 				}
 
 				// receive reply
 				if (ws.receive(reply)) {
-					std::cout << "Reply received successfully.\n";
-					// std::cout << reply;
+					cout << "Reply received successfully.\n";
+					cout << "GET REPLY: " << reply;
 				}
 				else {
-					std::cout << "Reply NOT received successfully.\n";
+					cout << "Reply NOT received successfully.\n";
 				}
+			}
+			else {
+				// cout << "Further contact denied.\n"
 			}
 
 			ws.closeSocket();
+
 			// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
 			// ------------- entered the critical section ------------------

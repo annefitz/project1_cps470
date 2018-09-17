@@ -42,12 +42,22 @@ public:
 	}
 
 	// connect to host (e.g., "www.google.com", or "121.223.12.2") on given port (e.g., 80)
-<<<<<<< HEAD
-	int connectToServer(string host, short port, HANDLE mutex)
-=======
 	int connectToServer(string host, short port, HANDLE print_mutex)
->>>>>>> a54a04f31f8c94e0dba803dd9184e315abfe0db1
 	{
+		// Check hostname uniqueness
+		// check HOST for uniqueness: if not unique, return non-zero
+		if (isHOSTUnique(host)) {
+			WaitForSingleObject(print_mutex, INFINITE);
+			cout << "\tChecking host uniqueness... passed\n";
+			ReleaseMutex(print_mutex);
+		}
+		else {
+			WaitForSingleObject(print_mutex, INFINITE);
+			cout << "\tChecking host uniqueness... failed\n";
+			ReleaseMutex(print_mutex);
+			return 2; // failed
+		}
+		
 		WaitForSingleObject(print_mutex, INFINITE);
 		cout << "\tDoing DNS... ";
 		ReleaseMutex(print_mutex);
@@ -72,8 +82,9 @@ public:
 				ReleaseMutex(print_mutex);
 				return 1;  // 1 means failure
 			}
-			else // take the first IP address and copy into sin_addr
+			else {// take the first IP address and copy into sin_addr
 				memcpy((char *)&(server.sin_addr), remote->h_addr, remote->h_length);
+			}
 		}
 		else
 		{
@@ -99,7 +110,41 @@ public:
 		cout << "done in " << duration.count() << "ms, found " << inet_ntoa(server.sin_addr) << "\n";
 		//printf("Successfully connected to %s (%s) on port %d\n", host.c_str(), inet_ntoa(server.sin_addr), htons(server.sin_port));
 		ReleaseMutex(print_mutex);
+
+		// check IP for uniqueness: if not unique, return non-zero
+		if (isIPUnique(host)) {
+			WaitForSingleObject(print_mutex, INFINITE);
+			cout << "\tChecking IP uniqueness... passed\n";
+			ReleaseMutex(print_mutex);
+		}
+		else {
+			WaitForSingleObject(print_mutex, INFINITE);
+			cout << "\tChecking IP uniqueness... failed\n";
+			ReleaseMutex(print_mutex);
+			return 2; // failed
+		}
+
 		return 0; 
+	}
+
+	// checks for IP uniqueness
+	bool isIPUnique(string IP) {
+		if (IP_container.find(IP) == IP_container.end()) {
+			// the IP is unique, so add it to the container
+			IP_container.insert(IP);
+			return true;
+		}
+		return false;
+	}
+
+	// checks for HOST uniqueness
+	bool isHOSTUnique(string HOST) {
+		if (HOST_container.find(HOST) == HOST_container.end()) {
+			// the IP is unique, so add it to the container
+			HOST_container.insert(HOST);
+			return true;
+		}
+		return false;
 	}
 
 	//// hostName (e.g., "www.google.com"),  2-byte port (e.g., 80)
@@ -132,7 +177,6 @@ public:
 	//		htons(server.sin_port));
 	//	return 0; 
 	//}
-	
 
 	// dot-separated hostIP (e.g., "132.11.22.2"), 2-byte port(e.g., 80)
 	int connectToServerIP(string hostIP, short port)
@@ -238,6 +282,7 @@ private:
 	char buf[BUF_SIZE];
 
 	// define other private variables if needed
-
+	unordered_set<string> IP_container;
+	unordered_set<string> HOST_container;
 
 };
