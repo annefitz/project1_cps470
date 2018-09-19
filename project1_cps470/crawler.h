@@ -52,7 +52,7 @@ static UINT thread_fun(LPVOID pParam)
 			p->inq->pop();
 			p->num_tasks--;
 
-							// return mutex
+			// return mutex
 			ReleaseMutex(p->q_mutex);
 			// ------------- left the critical section ------------------		
 
@@ -104,7 +104,6 @@ static UINT thread_fun(LPVOID pParam)
 			else {
 				cout << "\tChecking host uniqueness... failed\n";
 				ReleaseMutex(p->q_mutex);
-				continue;
 			}
 
 			// construct a GET or HEAD request (in a string), send request
@@ -144,7 +143,7 @@ static UINT thread_fun(LPVOID pParam)
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
 				WaitForSingleObject(p->print_mutex, INFINITE);
-				cout << "done in " << duration.count() << " ms with "<< HEADreply.size() << " bytes\n";
+				cout << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
 				ReleaseMutex(p->print_mutex);
 			}
 			else {
@@ -169,7 +168,7 @@ static UINT thread_fun(LPVOID pParam)
 				ws.closeSocket();
 				ws.createTCPSocket();
 
-				if (ws.connectToServer(host, port, p->print_mutex, 0) != 0) {
+				if (ws.connectToServerIP(IP, port) != 0) {
 					//printf("Connection error: %d\n", WSAGetLastError());
 				}
 				start = high_resolution_clock::now();
@@ -202,20 +201,36 @@ static UINT thread_fun(LPVOID pParam)
 					stop = high_resolution_clock::now();
 					duration = duration_cast<milliseconds>(stop - start);
 					WaitForSingleObject(p->print_mutex, INFINITE);
-					cout << "done in " << duration.count() << " ms with " << GETreply.size() <<" bytes\n";
+					cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
 					ReleaseMutex(p->print_mutex);
+
 					cout << "GET: " << GETreply << endl;
+
+					// find the status code in the reply
+					cout << GETreply;
+					//status_end_idx = GETreply.find("\n");
+					//status_code_string = GETreply.substr(9, status_end_idx);
+					//status_code = stoi(status_code_string.substr(0, 3));
+
+					//WaitForSingleObject(p->print_mutex, INFINITE);
+					//cout << "\tVerifying header... status code " << status_code << "\n";
+					//ReleaseMutex(p->print_mutex);
+
 				}
 				else {
-					cout << "Reply NOT received successfully.\n";
+					WaitForSingleObject(p->print_mutex, INFINITE);
+					cout << "failed\n";
+					ReleaseMutex(p->print_mutex);
+					ws.closeSocket();
+					continue;
 				}
 			}
+
 			else {
 				// cout << "Further contact denied.\n"
 			}
-				ws.closeSocket();
-				continue;
-			}
+
+
 			ws.closeSocket();
 
 			// obtain ownership of the mutex
@@ -233,7 +248,7 @@ static UINT thread_fun(LPVOID pParam)
 				SetEvent(p->eventQuit);
 
 			ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-										// ------------- left the critical section ------------------
+		}								// ------------- left the critical section ------------------
 	} // end of while loop for this thread
 
 	Winsock::cleanUp();

@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
 {
 
 	// Get filename from commandline
-	int num_threads = atoi(argv[1]);
+	int num_threads = (int) atoi(argv[1]);
 	string filename = argv[2];
 
 	// File I/O
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 	p.outq = &outQ;
 	p.print_mutex = &print_m;
 	p.q_mutex = &q_m;
-	HANDLE t[1];
+	HANDLE t[10];
 	// spawn each thread and store them in the thread array
 	for (int i = 0; i < num_threads; i++) {
 		// t[i] = thread(thread_fun, i, ref(p));
@@ -55,10 +55,14 @@ int main(int argc, char* argv[])
 	// wait for threads to terminate
 	for (int i = 0; i < num_threads; i++) {
 		WaitForSingleObject(p.eventQuit, INFINITE);
+		cout << "\nWAIT FOR KEYPRESS!!!!! ";
+		getchar(); getchar();
 	}
 
 	//printf("Enter any key to continue ...\n"); 
-	getchar(); 
+	cout << "\nWAIT FOR KEYPRESS!!!!! ";
+	getchar(); getchar();
+
 
 	return 0;   // 0 means successful
 }
