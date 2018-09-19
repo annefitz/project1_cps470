@@ -23,28 +23,37 @@ public:
 static UINT thread_fun(LPVOID pParam)
 {
 	Parameters *p = ((Parameters*)pParam);
+	//ResetEvent(p->finished);
 
 	// wait for mutex, then print and sleep inside the critical section
 	WaitForSingleObject(p->print_mutex, INFINITE);				// lock mutex
 	printf("Thread %d started\n", GetCurrentThreadId());		// always print inside critical section to avoid screen garbage
 	ReleaseMutex(p->print_mutex);								// release critical section
 
-	HANDLE	arr[] = { p->eventQuit, p->inq };
+	//HANDLE	arr[] = { p->eventQuit, p->inq };
 
 	Winsock::initialize();	// initialize 
 	Winsock ws;
 
 	while (true)
 	{
-		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled 
-			break;
-		else // semaQ is signaled. decreased the semaphore count by 1
+		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled 
 		{
+			DWORD err = GetLastError();
+			cout << "ERROR CODE: " << err << endl;
+			break;
+		}*/
+		//else // semaQ is signaled. decreased the semaphore count by 1
+		//{
+
+		if (p->num_tasks == 0 || p->inq->empty()) {
+			SetEvent(p->eventQuit);
+			break;
+		}
 			// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
 
 			// ------------- entered the critical section ---------------
-
 			string url = p->inq->front(); // get the item from the inputQ
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "URL: " << url << "\n";
@@ -93,7 +102,7 @@ static UINT thread_fun(LPVOID pParam)
 			auto stop = high_resolution_clock::now();  // instantiate vars
 			auto start = high_resolution_clock::now(); // instantiate vars
 			auto duration = duration_cast<milliseconds>(stop - start);
-
+			 
 			// get IP from hostname
 			string IP = ws.getIPfromhost(host, p->print_mutex);
 
@@ -123,11 +132,9 @@ static UINT thread_fun(LPVOID pParam)
 			else {
 				cout << "\tChecking IP uniqueness... failed\n";
 				ReleaseMutex(p->q_mutex);
-<<<<<<< HEAD
-=======
+
 				ws.closeSocket();
 				continue;
->>>>>>> 9afc3b2aa8b821816dd3a909ed88a7e7baa09fd3
 			}
 
 			// construct a GET or HEAD request (in a string), send request
@@ -151,12 +158,13 @@ static UINT thread_fun(LPVOID pParam)
 				continue;
 			}
 
-			// receive HEAD reply
-			start = high_resolution_clock::now(); // start timer for loading HEAD reply
+
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "\tLoading... ";
 			ReleaseMutex(p->print_mutex);
+			start = high_resolution_clock::now(); // start timer for loading HEAD reply
 
+			// receive HEAD reply
 			string HEADreply = "";
 			if (ws.receive(HEADreply)) {
 				//std::cout << "reply not success\n";
@@ -265,16 +273,15 @@ static UINT thread_fun(LPVOID pParam)
 			//p->num_tasks--;
 			printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
 
-			if (p->num_tasks == 0)
-				SetEvent(p->eventQuit);
-
-			ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-		}								// ------------- left the critical section ------------------
+			//cout << "TEST"; getchar();
+			//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
+		//}	// ------------- left the critical section ------------------
+		
 	} // end of while loop for this thread
 
 	Winsock::cleanUp();
 
-	// signal that this thread is exiting 
+	// signal that this thread is exiting
 	ReleaseSemaphore(p->finished, 1, NULL);
 
 	return 0;

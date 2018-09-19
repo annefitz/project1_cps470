@@ -4,7 +4,7 @@
 using namespace std::chrono;
 
 #define BUF_SIZE 1024
-#define TIMEOUT 20000
+#define TIMEOUT 10000
 // the .h file defines all windows socket functions 
 
 class Winsock
@@ -175,10 +175,6 @@ public:
 		return inet_ntoa(server.sin_addr);
 	}
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9afc3b2aa8b821816dd3a909ed88a7e7baa09fd3
 
 	//// hostName (e.g., "www.google.com"),  2-byte port (e.g., 80)
 	//int connectToServer(string hostName, short port)
@@ -260,6 +256,7 @@ public:
 	bool sendHEADRequest(string host)
 	{
 		string sendstring = "HEAD /robots.txt HTTP/1.0\nHost: " + host + "\n\n";
+
 		int size = sendstring.length();
 		if (send(sock, sendstring.c_str(), size, 0) == SOCKET_ERROR)
 		{
@@ -277,8 +274,8 @@ public:
 		FD_SET(sock, &Reader);
 
 		struct timeval timeout;
-		timeout.tv_sec = TIMEOUT;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = 10;
+		timeout.tv_usec = TIMEOUT;
 
 		recv_string = "";
 		int bytes = 0;
