@@ -49,7 +49,6 @@ public:
 		WaitForSingleObject(print_mutex, INFINITE);
 		cout << "\tDoing DNS... ";
 		ReleaseMutex(print_mutex);
->>>>>>> 0fd5f1a58c2270a4da99a86b99166c0051b1dfb3
 
 		// starting timer
 		auto start = high_resolution_clock::now();
@@ -149,16 +148,6 @@ public:
 		return inet_ntoa(server.sin_addr);
 	}
 
-	// checks for IP uniqueness
-	bool isIPUnique(string IP) {
-		if (IP_container.find(IP) == IP_container.end()) {
-			// the IP is unique, so add it to the container
-			IP_container.insert(IP);
-			return true;
-		}
-		return false;
-	}
-
 
 	//// hostName (e.g., "www.google.com"),  2-byte port (e.g., 80)
 	//int connectToServer(string hostName, short port)
@@ -199,7 +188,7 @@ public:
 		DWORD IP = inet_addr(hostIP.c_str());
 		if (IP == INADDR_NONE)
 		{ 
-			printf("Invalid IP string: nor IP address\n");
+			//printf("Invalid IP string: nor IP address\n");
 			return 1;  // 1 means failed						
 		}
 		else
@@ -213,11 +202,11 @@ public:
 									  
 		if (connect(sock, (struct sockaddr*) &server, sizeof(struct sockaddr_in)) == SOCKET_ERROR)
 		{
-			printf("Connection error: %d\n", WSAGetLastError());
+			//printf("Connection error: %d\n", WSAGetLastError());
 			return 1;
 		}
-		printf("Successfully connected to %s (%s) on port %d\n", hostIP.c_str(), inet_ntoa(server.sin_addr),
-			htons(server.sin_port));
+		//printf("Successfully connected to %s (%s) on port %d\n", hostIP.c_str(), inet_ntoa(server.sin_addr),
+		//	htons(server.sin_port));
 
 		return 0;
 	}
