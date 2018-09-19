@@ -84,33 +84,54 @@ static UINT thread_fun(LPVOID pParam)
 				continue;
 			}
 
+			// starting connection
+			// will first find IP then connect via IP
+			WaitForSingleObject(p->print_mutex, INFINITE);
+			cout << "\tDoing DNS... ";
+			ReleaseMutex(p->print_mutex);
+			// starting timer
+			auto stop = high_resolution_clock::now();  // instantiate vars
+			auto start = high_resolution_clock::now(); // instantiate vars
+			auto duration = duration_cast<milliseconds>(stop - start);
+
 			// get IP from hostname
 			string IP = ws.getIPfromhost(host, p->print_mutex);
 
 			ws.createTCPSocket();
 
 			if (ws.connectToServerIP(IP, port) == 1) {
-				//printf("Connection error: %d\n", WSAGetLastError());
-
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "failed\n";
+				ReleaseMutex(p->print_mutex);
+				ws.closeSocket();
+				continue;
+			}
+			else {
+				stop = high_resolution_clock::now();
+				duration = duration_cast<milliseconds>(stop - start);
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "done in " << duration.count() << " ms, found " << IP << "\n";
 			}
 
 			WaitForSingleObject(p->q_mutex, INFINITE);
 			if (p->IP_container.find(IP) == p->IP_container.end()) {
 				// the IP is unique, so add it to the container
 				p->IP_container.insert(IP);
-				cout << "\tChecking host uniqueness... passed\n";
+				cout << "\tChecking IP uniqueness... passed\n";
 				ReleaseMutex(p->q_mutex);
 			}
 			else {
-				cout << "\tChecking host uniqueness... failed\n";
+				cout << "\tChecking IP uniqueness... failed\n";
 				ReleaseMutex(p->q_mutex);
+<<<<<<< HEAD
+=======
+				ws.closeSocket();
+				continue;
+>>>>>>> 9afc3b2aa8b821816dd3a909ed88a7e7baa09fd3
 			}
 
 			// construct a GET or HEAD request (in a string), send request
-			// starting timer
-			auto stop = high_resolution_clock::now();  // instantiate vars
-			auto start = high_resolution_clock::now(); // instantiate vars
-			auto duration = duration_cast<milliseconds>(stop - start);
+			start = high_resolution_clock::now();
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "\tConnecting on robots... ";
 			ReleaseMutex(p->print_mutex);
