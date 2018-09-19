@@ -49,6 +49,7 @@ public:
 		WaitForSingleObject(print_mutex, INFINITE);
 		cout << "\tDoing DNS... ";
 		ReleaseMutex(print_mutex);
+>>>>>>> 0fd5f1a58c2270a4da99a86b99166c0051b1dfb3
 
 		// starting timer
 		auto start = high_resolution_clock::now();
