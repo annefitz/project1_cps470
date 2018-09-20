@@ -108,6 +108,7 @@ static UINT thread_fun(LPVOID pParam)
 			if (IP.empty()) {
 				WaitForSingleObject(p->print_mutex, INFINITE);
 				cout << "failed\n";
+				cout << "Invalid string: neither FQDN, nor IP address\n";
 				ReleaseMutex(p->print_mutex);
 				ws.closeSocket();
 				printf("Invalid string: neither FQDN, nor IP address\n");
@@ -246,6 +247,7 @@ static UINT thread_fun(LPVOID pParam)
 					status_end_idx = GETreply.find("\n");
 					status_code_string = GETreply.substr(9, status_end_idx);
 					status_code = stoi(status_code_string.substr(0, 3));
+
 					WaitForSingleObject(p->print_mutex, INFINITE);
 					cout << "\tVerifying header... status code " << status_code << "\n";
 					ReleaseMutex(p->print_mutex);
@@ -270,6 +272,7 @@ static UINT thread_fun(LPVOID pParam)
 						ReleaseMutex(p->print_mutex);
 						
 					}
+
 				}
 				else {
 					WaitForSingleObject(p->print_mutex, INFINITE);
