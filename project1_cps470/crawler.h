@@ -45,14 +45,17 @@ static UINT thread_fun(LPVOID pParam)
 		}*/
 		//else // semaQ is signaled. decreased the semaphore count by 1
 		//{
+		printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
 
+		WaitForSingleObject(p->q_mutex, INFINITE);
 		if (p->num_tasks == 0 || p->inq->empty()) {
+			cout << "CHECK\n";
 			SetEvent(p->eventQuit);
+			ReleaseMutex(p->q_mutex);
 			break;
 		}
 			// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
-
 			// ------------- entered the critical section ---------------
 			string url = p->inq->front(); // get the item from the inputQ
 			WaitForSingleObject(p->print_mutex, INFINITE);
@@ -117,7 +120,7 @@ static UINT thread_fun(LPVOID pParam)
 
 			if (ws.connectToServerIP(IP, port) == 1) {
 				WaitForSingleObject(p->print_mutex, INFINITE);
-				cout << "failed\n";
+				cout << "IP: " << IP << "failed\n";
 				ReleaseMutex(p->print_mutex);
 				ws.closeSocket();
 				continue;
@@ -184,7 +187,7 @@ static UINT thread_fun(LPVOID pParam)
 			}
 			else {
 				WaitForSingleObject(p->print_mutex, INFINITE);
-				cout << "failed\n";
+				cout << "IP: " << IP << " failed\n";
 				ReleaseMutex(p->print_mutex);
 				ws.closeSocket();
 				continue;
@@ -268,7 +271,6 @@ static UINT thread_fun(LPVOID pParam)
 						WaitForSingleObject(p->print_mutex, INFINITE);
 						cout << "done in " << duration.count() << " ms with " << count << " links\n";
 						ReleaseMutex(p->print_mutex);
-						
 					}
 
 				}
@@ -279,17 +281,12 @@ static UINT thread_fun(LPVOID pParam)
 					ws.closeSocket();
 					continue;
 				}
-			}
-
-			else {
-				// cout << "Further contact denied.\n"
-			}
-
+			} // else further contact denied
 
 			ws.closeSocket();
 
 			// obtain ownership of the mutex
-			WaitForSingleObject(p->q_mutex, INFINITE);
+			//WaitForSingleObject(p->q_mutex, INFINITE);
 			// ------------- entered the critical section ------------------
 
 			// write results into outputQ
@@ -297,11 +294,10 @@ static UINT thread_fun(LPVOID pParam)
 
 			// p->active_threads --;
 			//p->num_tasks--;
-			printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
 
 			//cout << "TEST"; getchar();
 			//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-		//}	// ------------- left the critical section ------------------
+			//} ------------- left the critical section ------------------
 		
 	} // end of while loop for this thread
 
