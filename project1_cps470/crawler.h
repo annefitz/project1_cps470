@@ -102,14 +102,15 @@ static UINT thread_fun(LPVOID pParam)
 			auto stop = high_resolution_clock::now();  // instantiate vars
 			auto start = high_resolution_clock::now(); // instantiate vars
 			auto duration = duration_cast<milliseconds>(stop - start);
-			 
-			// get IP from hostname
+
+			// get IP from hostname, check for valid host/IP
 			string IP = ws.getIPfromhost(host, p->print_mutex);
 			if (IP.empty()) {
 				WaitForSingleObject(p->print_mutex, INFINITE);
 				cout << "failed\n";
 				ReleaseMutex(p->print_mutex);
 				ws.closeSocket();
+				printf("Invalid string: neither FQDN, nor IP address\n");
 				continue;
 			}
 
