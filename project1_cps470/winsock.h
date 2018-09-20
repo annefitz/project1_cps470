@@ -158,10 +158,7 @@ public:
 			// if not a valid IP, then do a DNS lookup
 			if ((remote = gethostbyname(host.c_str())) == NULL)
 			{
-				WaitForSingleObject(print_mutex, INFINITE);
-				printf("Invalid string: neither FQDN, nor IP address\n");
-				ReleaseMutex(print_mutex);
-				return NULL;  // NULL means failure
+				return "";  // NULL means failure
 			}
 			else {// take the first IP address and copy into sin_addr
 				memcpy((char *)&(server.sin_addr), remote->h_addr, remote->h_length);

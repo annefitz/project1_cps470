@@ -105,6 +105,13 @@ static UINT thread_fun(LPVOID pParam)
 			 
 			// get IP from hostname
 			string IP = ws.getIPfromhost(host, p->print_mutex);
+			if (IP.empty()) {
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				cout << "failed\n";
+				ReleaseMutex(p->print_mutex);
+				ws.closeSocket();
+				continue;
+			}
 
 			ws.createTCPSocket();
 
@@ -233,18 +240,35 @@ static UINT thread_fun(LPVOID pParam)
 					cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
 					ReleaseMutex(p->print_mutex);
 
-					cout << "GET: " << GETreply << endl;
-
 					// find the status code in the reply
-					cout << GETreply;
-					//status_end_idx = GETreply.find("\n");
-					//status_code_string = GETreply.substr(9, status_end_idx);
-					//status_code = stoi(status_code_string.substr(0, 3));
-
-					//WaitForSingleObject(p->print_mutex, INFINITE);
-					//cout << "\tVerifying header... status code " << status_code << "\n";
-					//ReleaseMutex(p->print_mutex);
-
+					//cout << GETreply;
+					status_end_idx = GETreply.find("\n");
+					status_code_string = GETreply.substr(9, status_end_idx);
+					status_code = stoi(status_code_string.substr(0, 3));
+					WaitForSingleObject(p->print_mutex, INFINITE);
+					cout << "\tVerifying header... status code " << status_code << "\n";
+					ReleaseMutex(p->print_mutex);
+					
+					if (status_code == 200) {
+						start = high_resolution_clock::now();
+						WaitForSingleObject(p->print_mutex, INFINITE);
+						cout << "\tParsing page... ";
+						ReleaseMutex(p->print_mutex);
+						int count = 0;
+						status_end_idx = GETreply.find("http");
+						status_code_string = GETreply.substr(status_end_idx);
+						while (status_end_idx != NULL) {
+							count++;
+							status_end_idx = status_code_string.find("http")+1;
+							status_code_string = status_code_string.substr(status_end_idx);
+						}
+						stop = high_resolution_clock::now();
+						duration = duration_cast<milliseconds>(stop - start);
+						WaitForSingleObject(p->print_mutex, INFINITE);
+						cout << "done in " << duration.count() << " ms with " << count << " links\n";
+						ReleaseMutex(p->print_mutex);
+						
+					}
 				}
 				else {
 					WaitForSingleObject(p->print_mutex, INFINITE);
