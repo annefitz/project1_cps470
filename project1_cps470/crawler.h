@@ -107,11 +107,9 @@ static UINT thread_fun(LPVOID pParam)
 			string IP = ws.getIPfromhost(host, p->print_mutex);
 			if (IP.empty()) {
 				WaitForSingleObject(p->print_mutex, INFINITE);
-				cout << "failed\n";
 				cout << "Invalid string: neither FQDN, nor IP address\n";
 				ReleaseMutex(p->print_mutex);
 				ws.closeSocket();
-				printf("Invalid string: neither FQDN, nor IP address\n");
 				continue;
 			}
 
