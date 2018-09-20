@@ -102,9 +102,15 @@ static UINT thread_fun(LPVOID pParam)
 			auto stop = high_resolution_clock::now();  // instantiate vars
 			auto start = high_resolution_clock::now(); // instantiate vars
 			auto duration = duration_cast<milliseconds>(stop - start);
-			 
-			// get IP from hostname
+
+			// get IP from hostname, check for valid host/IP
 			string IP = ws.getIPfromhost(host, p->print_mutex);
+			if (IP.empty()) {
+				WaitForSingleObject(p->print_mutex, INFINITE);
+				printf("Invalid string: neither FQDN, nor IP address\n");
+				ReleaseMutex(p->print_mutex);
+				continue;
+			}
 
 			ws.createTCPSocket();
 
@@ -233,17 +239,17 @@ static UINT thread_fun(LPVOID pParam)
 					cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
 					ReleaseMutex(p->print_mutex);
 
-					cout << "GET: " << GETreply << endl;
+					//cout << "GET: " << GETreply << endl;
 
 					// find the status code in the reply
-					cout << GETreply;
-					//status_end_idx = GETreply.find("\n");
-					//status_code_string = GETreply.substr(9, status_end_idx);
-					//status_code = stoi(status_code_string.substr(0, 3));
+					//cout << GETreply;
+					status_end_idx = GETreply.find("\n");
+					status_code_string = GETreply.substr(9, status_end_idx);
+					status_code = stoi(status_code_string.substr(0, 3));
 
-					//WaitForSingleObject(p->print_mutex, INFINITE);
-					//cout << "\tVerifying header... status code " << status_code << "\n";
-					//ReleaseMutex(p->print_mutex);
+					WaitForSingleObject(p->print_mutex, INFINITE);
+					cout << "\tVerifying header... status code " << status_code << "\n";
+					ReleaseMutex(p->print_mutex);
 
 				}
 				else {

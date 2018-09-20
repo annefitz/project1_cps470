@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 	p.outq = &outQ;
 	p.print_mutex = &print_m;
 	p.q_mutex = &q_m;
-	HANDLE t[1];
+	HANDLE t[3];
 
 	// spawn each thread and store them in the thread array
 	for (int i = 0; i < num_threads; i++) {
