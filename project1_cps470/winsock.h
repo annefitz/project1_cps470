@@ -4,7 +4,7 @@
 using namespace std::chrono;
 
 #define BUF_SIZE 1024
-#define TIMEOUT 20000
+#define TIMEOUT 10000
 // the .h file defines all windows socket functions 
 
 class Winsock
@@ -49,6 +49,32 @@ public:
 		WaitForSingleObject(print_mutex, INFINITE);
 		cout << "\tDoing DNS... ";
 		ReleaseMutex(print_mutex);
+<<<<<<< HEAD
+=======
+	// connect to host (e.g., "www.google.com", or "121.223.12.2") on given port (e.g., 80)
+	int connectToServer(string host, short port, HANDLE print_mutex, int print)
+	{
+		if (print == 1) {
+			// Check hostname uniqueness
+			// check HOST for uniqueness: if not unique, return non-zero
+			if (isHOSTUnique(host)) {
+				WaitForSingleObject(print_mutex, INFINITE);
+				cout << "\tChecking host uniqueness... passed\n";
+				ReleaseMutex(print_mutex);
+			}
+			else {
+				WaitForSingleObject(print_mutex, INFINITE);
+				cout << "\tChecking host uniqueness... failed\n";
+				ReleaseMutex(print_mutex);
+				return 2; // failed
+			}
+			WaitForSingleObject(print_mutex, INFINITE);
+			cout << "\tDoing DNS... ";
+			ReleaseMutex(print_mutex);
+		}
+>>>>>>> 0fd5f1a58c2270a4da99a86b99166c0051b1dfb3
+=======
+>>>>>>> 9afc3b2aa8b821816dd3a909ed88a7e7baa09fd3
 
 		// starting timer
 		auto start = high_resolution_clock::now();
@@ -70,7 +96,8 @@ public:
 				ReleaseMutex(print_mutex);
 				return 1;  // 1 means failure
 			}
-			else {// take the first IP address and copy into sin_addr
+			else {
+				// take the first IP address and copy into sin_addr
 				memcpy((char *)&(server.sin_addr), remote->h_addr, remote->h_length);
 			}
 		}
@@ -215,6 +242,7 @@ public:
 	bool sendGETRequest(string host, string path, string query)
 	{
 		string sendstring = "GET /" + path + "/" + query + " HTTP/1.0\nUser-agent:UDCScrawler/1.0\nHost:" + host + "\nConnection: close" + "\n\n";
+
 		int size = sendstring.length();
 		if (send(sock, sendstring.c_str(), size, 0) == SOCKET_ERROR)
 		{
@@ -228,6 +256,7 @@ public:
 	bool sendHEADRequest(string host)
 	{
 		string sendstring = "HEAD /robots.txt HTTP/1.0\nHost: " + host + "\n\n";
+
 		int size = sendstring.length();
 		if (send(sock, sendstring.c_str(), size, 0) == SOCKET_ERROR)
 		{
@@ -245,8 +274,8 @@ public:
 		FD_SET(sock, &Reader);
 
 		struct timeval timeout;
-		timeout.tv_sec = TIMEOUT;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = 10;
+		timeout.tv_usec = TIMEOUT;
 
 		recv_string = "";
 		int bytes = 0;
