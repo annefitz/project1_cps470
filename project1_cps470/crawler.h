@@ -11,10 +11,10 @@ class Parameters {
 public:
 	HANDLE print_mutex;
 	HANDLE q_mutex;
+	HANDLE unique_mutex;
 	HANDLE finished;
 	HANDLE eventQuit;
 	queue<string> *inq;
-	queue<string> *outq;
 	unordered_set<string> HOST_container;
 	unordered_set<string> IP_container;
 	int num_tasks;
@@ -47,16 +47,14 @@ static UINT thread_fun(LPVOID pParam)
 		//{
 		printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
 
-		WaitForSingleObject(p->q_mutex, INFINITE);
-		if (p->num_tasks == 0 || p->inq->empty()) {
-			cout << "CHECK\n";
-			SetEvent(p->eventQuit);
-			ReleaseMutex(p->q_mutex);
-			break;
-		}
 			// obtain ownership of the mutex
 			WaitForSingleObject(p->q_mutex, INFINITE);
 			// ------------- entered the critical section ---------------
+			if (p->num_tasks == 0 || p->inq->empty()) {
+				cout << "CHECK\n";
+				//ReleaseMutex(p->print_mutex);
+				break;
+			}
 			string url = p->inq->front(); // get the item from the inputQ
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "URL: " << url << "\n";
@@ -83,16 +81,17 @@ static UINT thread_fun(LPVOID pParam)
 			ReleaseMutex(p->print_mutex);
 			// delay here: contact a peer, send a request, and receive/parse the response 
 
-			WaitForSingleObject(p->q_mutex, INFINITE);
+			// check for host uniqueness
+			WaitForSingleObject(p->unique_mutex, INFINITE);
 			if (p->HOST_container.find(host) == p->HOST_container.end()) {
-				// the IP is unique, so add it to the container
+				// the HOST is unique, so add it to the container
 				p->HOST_container.insert(host);
 				cout << "\tChecking host uniqueness... passed\n";
-				ReleaseMutex(p->q_mutex);
+				ReleaseMutex(p->unique_mutex);
 			}
 			else {
 				cout << "\tChecking host uniqueness... failed\n";
-				ReleaseMutex(p->q_mutex);
+				ReleaseMutex(p->unique_mutex);
 				continue;
 			}
 
@@ -132,16 +131,16 @@ static UINT thread_fun(LPVOID pParam)
 				cout << "done in " << duration.count() << " ms, found " << IP << "\n";
 			}
 
-			WaitForSingleObject(p->q_mutex, INFINITE);
+			WaitForSingleObject(p->unique_mutex, INFINITE);
 			if (p->IP_container.find(IP) == p->IP_container.end()) {
 				// the IP is unique, so add it to the container
 				p->IP_container.insert(IP);
 				cout << "\tChecking IP uniqueness... passed\n";
-				ReleaseMutex(p->q_mutex);
+				ReleaseMutex(p->unique_mutex);
 			}
 			else {
 				cout << "\tChecking IP uniqueness... failed\n";
-				ReleaseMutex(p->q_mutex);
+				ReleaseMutex(p->unique_mutex);
 
 				ws.closeSocket();
 				continue;
@@ -284,6 +283,12 @@ static UINT thread_fun(LPVOID pParam)
 			} // else further contact denied
 
 			ws.closeSocket();
+
+			/*WaitForSingleObject(p->q_mutex, INFINITE);
+			if (p->num_tasks == 0) {
+				SetEvent(p->eventQuit);
+				ReleaseMutex(p->q_mutex);
+			}*/
 
 			// obtain ownership of the mutex
 			//WaitForSingleObject(p->q_mutex, INFINITE);

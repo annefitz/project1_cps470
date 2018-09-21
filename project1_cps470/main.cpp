@@ -27,18 +27,18 @@ int main(int argc, char* argv[])
 	// push all URLs onto queue
 	string turl = "";
 	queue<string> inQ;
-	queue<string> outQ;
 	while (!fin.eof()) {
 		fin >> turl;
-		//cout << turl << endl;
+		cout << turl << endl;
 		inQ.push(turl);
 	}
-
+	getchar();
 	fin.close();
 
 	mutex print_m;
 	mutex q_m;
-	HANDLE event_quit = CreateEventA(NULL, false, false, NULL);
+	mutex unique_m;
+	HANDLE event_quit = CreateEventA(NULL, true, false, NULL);
 	HANDLE thread_finish = CreateSemaphoreA(NULL, 0, 1, NULL);
 
 	// threading
@@ -47,9 +47,9 @@ int main(int argc, char* argv[])
 	p.finished = thread_finish;
 	p.num_tasks = size(inQ);
 	p.inq = &inQ;
-	p.outq = &outQ;
 	p.print_mutex = &print_m;
 	p.q_mutex = &q_m;
+	p.unique_mutex = &unique_m;
 	HANDLE *t = new HANDLE[num_threads];
 
 	// spawn each thread and store them in the thread array
@@ -62,9 +62,6 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < num_threads; i++) {
 		WaitForSingleObject(p.finished, INFINITE);
 	}
-
-	for (int i = 0; i < num_threads; i++)
-		delete[] t[i];
 
 	delete[] t;
 
