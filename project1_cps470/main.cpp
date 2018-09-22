@@ -29,10 +29,10 @@ int main(int argc, char* argv[])
 	queue<string> inQ;
 	while (!fin.eof()) {
 		fin >> turl;
-		cout << turl << endl;
+		//cout << turl << endl;
 		inQ.push(turl);
 	}
-	getchar();
+	//getchar();
 	fin.close();
 
 	mutex print_m;
