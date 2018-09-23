@@ -10,7 +10,7 @@ using namespace std::chrono;
 class Parameters {
 public:
 	HANDLE print_mutex;
-	LPCRITICAL_SECTION q_mutex;
+	CRITICAL_SECTION q_mutex;
 	HANDLE unique_mutex;
 	HANDLE finished;
 	HANDLE eventQuit;
@@ -18,17 +18,23 @@ public:
 	unordered_set<string> HOST_container;
 	unordered_set<string> IP_container;
 	int num_tasks;
-	_Interlocked_operand_ unsigned *num_HOST_unique;
-	_Interlocked_operand_ unsigned *num_DNS;
-	_Interlocked_operand_ unsigned *num_IP_unique;
-	_Interlocked_operand_ unsigned *num_robots;
-	_Interlocked_operand_ unsigned *num_URLs;
-	_Interlocked_operand_ unsigned *total_links_found;
+	_Interlocked_operand_ unsigned num_HOST_unique;
+	_Interlocked_operand_ unsigned num_DNS;
+	_Interlocked_operand_ unsigned num_IP_unique;
+	_Interlocked_operand_ unsigned num_robots;
+	_Interlocked_operand_ unsigned num_URLs;
+	_Interlocked_operand_ unsigned total_links_found;
+
+	Parameters() {
+		//q_mutex = &q_m;
+		InitializeCriticalSection(&q_mutex);
+	}
 };
 
 static UINT thread_fun(LPVOID pParam)
 {
 	Parameters *p = ((Parameters*)pParam);
+	//InitializeCriticalSection(p->q_mutex);
 	//ResetEvent(p->finished);
 
 	// wait for mutex, then print and sleep inside the critical section
@@ -43,23 +49,23 @@ static UINT thread_fun(LPVOID pParam)
 
 	while (true)
 	{
-		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled 
+		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled 
 		{
 			DWORD err = GetLastError();
 			cout << "ERROR CODE: " << err << endl;
 			break;
 		}
 		else // semaQ is signaled. decreased the semaphore count by 1
-		{*/
+		{
 
 			// obtain ownership of the mutex
-			WaitForSingleObject(p->q_mutex, INFINITE);
-			EnterCriticalSection(p->q_mutex);
+			//WaitForSingleObject(p->q_mutex, INFINITE);
+			EnterCriticalSection(&(p->q_mutex));
 				// ------------- entered the critical section ---------------
 				if (p->num_tasks == 0 || p->inq->empty()) {
 					cout << "CHECK\n";
 					SetEvent(p->eventQuit);
-					LeaveCriticalSection(p->q_mutex);
+					LeaveCriticalSection(&(p->q_mutex));
 					//ReleaseMutex(p->q_mutex);
 					break;
 				}
@@ -69,11 +75,11 @@ static UINT thread_fun(LPVOID pParam)
 				cout << "URL: " << url << "\n";
 				ReleaseMutex(p->print_mutex);
 				p->inq->pop();
-				InterlockedIncrement(p->num_URLs);
+				InterlockedIncrement(&(p->num_URLs));
 				p->num_tasks--;
 			// return mutex
 			//ReleaseMutex(p->q_mutex);
-			LeaveCriticalSection(p->q_mutex);
+			LeaveCriticalSection(&(p->q_mutex));
 			// ------------- left the critical section ------------------		
 
 			// parse url
@@ -294,12 +300,15 @@ static UINT thread_fun(LPVOID pParam)
 
 			ws.closeSocket();
 
-			WaitForSingleObject(p->q_mutex, INFINITE);
+			//WaitForSingleObject(p->q_mutex, INFINITE);
+			EnterCriticalSection(&(p->q_mutex));
 			if (p->num_tasks == 0) {
 				SetEvent(p->eventQuit);
-				ReleaseMutex(p->q_mutex);
+				//ReleaseMutex(p->q_mutex);
+				LeaveCriticalSection(&(p->q_mutex));
 				break;
 			}
+			LeaveCriticalSection(&(p->q_mutex));
 
 			// obtain ownership of the mutex
 			//WaitForSingleObject(p->q_mutex, INFINITE);
@@ -313,7 +322,7 @@ static UINT thread_fun(LPVOID pParam)
 
 			//cout << "TEST"; getchar();
 			//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-			//} // ------------- left the critical section ------------------
+			} // ------------- left the critical section ------------------
 		
 	} // end of while loop for this thread
 

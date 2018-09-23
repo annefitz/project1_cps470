@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
 	HANDLE print_m = CreateMutex(NULL, true, NULL);
     //HANDLE q_m = CreateMutex(NULL, true, NULL);
-	//CRITICAL_SECTION q_m;
+	//LPCRITICAL_SECTION q_m;
 	HANDLE unique_m = CreateMutex(NULL, true, NULL);
 	HANDLE stats_m = CreateMutex(NULL, true, NULL);
 	HANDLE event_quit = CreateEvent(NULL, true, false, NULL);
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 	p.num_DNS = 0;
 	p.num_IP_unique = 0;
 	p.num_robots = 0;
-	//p.num_URLs = 0;
+	p.num_URLs = 0;
 	p.total_links_found = 0;
 	
 	p.eventQuit = event_quit;
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 	p.unique_mutex = &unique_m;
 	HANDLE *t = new HANDLE[num_threads];
 
-	InitializeCriticalSection(p.q_mutex);
+	//InitializeCriticalSection(p.q_mutex);
 	auto start = high_resolution_clock::now(); // instantiate vars
 
 	// spawn each thread and store them in the thread array
@@ -79,14 +79,14 @@ int main(int argc, char* argv[])
 	auto crawl_duration = duration_cast<milliseconds>(stop - start); // total time elapsed
 
 	// data calculatiions
-	int url_ps = *p.num_URLs / (crawl_duration.count() / 1000);
+	int url_ps = p.num_URLs / (crawl_duration.count() / 1000);
 
 	// data print block
 	printf("Extracted %d URLs @ %d/s\n", p.num_URLs, url_ps);
 
 	delete[] t;
 
-	Winsock::cleanUp;
+	//Winsock::cleanUp;
 	//printf("Enter any key to continue ...\n"); 
 	cout << "\nWAIT FOR ENTER!!!! ";
 	getchar();
