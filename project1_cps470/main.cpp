@@ -54,20 +54,16 @@ int main(int argc, char* argv[])
 	p.num_URLs = 0;
 	p.total_links_found = 0;
 	
-	mutex print_m;
-	mutex q_m;
-	mutex unique_m;
-	HANDLE event_quit = CreateEventA(NULL, true, false, NULL);
-	HANDLE thread_finish = CreateSemaphoreA(NULL, 0, 1, NULL);
+	//mutex print_m;
+	//mutex q_m;
+	//mutex unique_m;
 
-	// threading
-	Parameters p;
 	p.eventQuit = event_quit;
 	p.finished = thread_finish;
 	p.num_tasks = size(inQ);
 	p.inq = &inQ;
 	p.print_mutex = &print_m;
-	p.q_mutex = &q_m;
+	//p.q_mutex = &q_m;
 	p.unique_mutex = &unique_m;
 	HANDLE *t = new HANDLE[num_threads];
 
@@ -84,6 +80,7 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < num_threads; i++) {
 		WaitForSingleObject(p.finished, INFINITE);
 	}
+
 	auto stop = high_resolution_clock::now();  // instantiate vars
 	auto crawl_duration = duration_cast<milliseconds>(stop - start); // total time elapsed
 
@@ -96,8 +93,9 @@ int main(int argc, char* argv[])
 	delete[] t;
 
 	//Winsock::cleanUp;
+
 	//printf("Enter any key to continue ...\n"); 
-	cout << "\nWAIT FOR ENTER!!!! ";
+	cout << "\nWAIT FOR KEYPRESS!!!!! ";
 	getchar();
 
 	return 0;   // 0 means successful

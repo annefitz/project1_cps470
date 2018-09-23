@@ -11,7 +11,6 @@ class Parameters {
 public:
 	HANDLE print_mutex;
 	CRITICAL_SECTION q_mutex;
-	HANDLE q_mutex;
 	HANDLE unique_mutex;
 	HANDLE finished;
 	HANDLE eventQuit;
@@ -50,8 +49,6 @@ static UINT thread_fun(LPVOID pParam)
 
 	while (true)
 	{
-<<<<<<< HEAD
-		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled 
 		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
 		{
 			DWORD err = GetLastError();
@@ -60,10 +57,10 @@ static UINT thread_fun(LPVOID pParam)
 		}*/
 		//else // semaQ is signaled. decreased the semaphore count by 1
 		//{
-		printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
+		//printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
 
 		// obtain ownership of the mutex
-		WaitForSingleObject(p->q_mutex, INFINITE);
+		// WaitForSingleObject(p->q_mutex, INFINITE);
 		// ------------- entered the critical section ---------------
 		if (p->num_tasks == 0 || p->inq->empty()) {
 			cout << "CHECK\n";
@@ -97,26 +94,9 @@ static UINT thread_fun(LPVOID pParam)
 			LeaveCriticalSection(&(p->q_mutex));
 			// ------------- left the critical section ------------------		
 
-			// parse url
-			URLParser parser(url);
-			string host = parser.getHost();
-			string path = parser.getPath();
-			string query = parser.getQuery();
-			short port = parser.getPort();
-
 			//cout << endl << "HOST: " << host << " PATH: " << path << " QUERY: " << query << endl;
 
-			//cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
-		string url = p->inq->front(); // get the item from the inputQ
-		WaitForSingleObject(p->print_mutex, INFINITE);
-		cout << "URL: " << url << "\n";
-		ReleaseMutex(p->print_mutex);
-		p->inq->pop();
-		p->num_tasks--;
-
-		// return mutex
-		ReleaseMutex(p->q_mutex);
-		// ------------- left the critical section ------------------		
+			//cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";	
 
 		// parse url
 		URLParser parser(url);
@@ -353,7 +333,7 @@ static UINT thread_fun(LPVOID pParam)
 				break;
 			}
 			LeaveCriticalSection(&(p->q_mutex));
-=======
+
 		// obtain ownership of the mutex
 		//WaitForSingleObject(p->q_mutex, INFINITE);
 		// ------------- entered the critical section ------------------
