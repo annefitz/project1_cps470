@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
 	// File I/O
 	ifstream fin;
 	fin.open(filename);
+
 	if (fin.fail()) {
 		cout << "File failed to open.\n";
 		return 1;
@@ -28,10 +29,10 @@ int main(int argc, char* argv[])
 	queue<string> inQ;
 	while (!fin.eof()) {
 		fin >> turl;
-		//cout << turl << endl;
+		cout << turl << endl;
 		inQ.push(turl);
 	}
-	//getchar();
+	getchar();
 	fin.close();
 
 	HANDLE print_m = CreateMutex(NULL, true, NULL);
@@ -53,12 +54,20 @@ int main(int argc, char* argv[])
 	p.num_URLs = 0;
 	p.total_links_found = 0;
 	
+	mutex print_m;
+	mutex q_m;
+	mutex unique_m;
+	HANDLE event_quit = CreateEventA(NULL, true, false, NULL);
+	HANDLE thread_finish = CreateSemaphoreA(NULL, 0, 1, NULL);
+
+	// threading
+	Parameters p;
 	p.eventQuit = event_quit;
 	p.finished = thread_finish;
 	p.num_tasks = size(inQ);
 	p.inq = &inQ;
 	p.print_mutex = &print_m;
-	//p.q_mutex = q_m;
+	p.q_mutex = &q_m;
 	p.unique_mutex = &unique_m;
 	HANDLE *t = new HANDLE[num_threads];
 
