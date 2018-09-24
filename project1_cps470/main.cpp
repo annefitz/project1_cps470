@@ -52,8 +52,21 @@ int main(int argc, char* argv[])
 	p.num_IP_unique = 0;
 	p.num_robots = 0;
 	p.num_URLs = 0;
+	p.num_crawled = 0;
 	p.total_links_found = 0;
+
+	p.time_crawled = 0;
+	p.time_DNS = 0;
+	p.time_links = 0;
+	p.time_robots = 0;
+	p.size_crawl = 0;
 	
+	p.num_200 = 0;
+	p.num_300 = 0;
+	p.num_400 = 0;
+	p.num_500 = 0;
+	p.num_other = 0;
+
 	//mutex print_m;
 	//mutex q_m;
 	//mutex unique_m;
@@ -86,9 +99,25 @@ int main(int argc, char* argv[])
 
 	// data calculatiions
 	int url_ps = p.num_URLs / (crawl_duration.count() / 1000);
+	int dns_ps = p.num_DNS / (p.time_DNS / 1000);
+	if (p.time_robots < 1000) {
+		p.time_robots = 1000;
+	}
+	int robots_ps = p.num_robots / (p.time_robots / 1000);
+	int crawl_ps = p.num_crawled / (p.time_crawled / 1000);
+	if (p.time_links< 1000) {
+		p.time_links = 1000;
+	}
+	int links_ps = p.total_links_found / (p.time_links / 1000);
 
 	// data print block
 	printf("Extracted %d URLs @ %d/s\n", p.num_URLs, url_ps);
+	printf("Looked up %d DNS names @ %d/s\n", p.num_DNS, dns_ps);
+	printf("Downloaded %d robots @ %d/s\n", p.num_robots, robots_ps);
+	printf("Crawled %d pages @ %d/s (%.2f MB)\n", p.num_crawled, crawl_ps, (float) p.size_crawl/1000000);
+	printf("Parsed %d links @ %d/s\n", p.total_links_found, links_ps);
+	printf("HTTP codes: 2xx = %d, 3xx = %d, 4xx = %d, 5xx = %d, other = %d", p.num_200, p.num_300, p.num_400, p.num_500, p.num_other);
+
 
 	delete[] t;
 

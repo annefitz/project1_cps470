@@ -23,7 +23,21 @@ public:
 	_Interlocked_operand_ unsigned num_IP_unique;
 	_Interlocked_operand_ unsigned num_robots;
 	_Interlocked_operand_ unsigned num_URLs;
-	_Interlocked_operand_ unsigned total_links_found;
+	_Interlocked_operand_ unsigned num_crawled;
+	_Interlocked_operand_ long total_links_found;
+
+	_Interlocked_operand_ long time_DNS;
+	_Interlocked_operand_ long time_robots;
+	_Interlocked_operand_ long time_crawled;
+	_Interlocked_operand_ long time_links;
+
+	_Interlocked_operand_ long size_crawl;
+
+	_Interlocked_operand_ unsigned num_200;
+	_Interlocked_operand_ unsigned num_300;
+	_Interlocked_operand_ unsigned num_400;
+	_Interlocked_operand_ unsigned num_500;
+	_Interlocked_operand_ unsigned num_other;
 
 	Parameters() {
 		//q_mutex = &q_m;
@@ -148,7 +162,6 @@ static UINT thread_fun(LPVOID pParam)
 		}
 
 		ws.createTCPSocket();
-
 		if (ws.connectToServerIP(IP, port) == 1) {
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "IP: " << IP << "failed\n";
@@ -159,6 +172,8 @@ static UINT thread_fun(LPVOID pParam)
 		else {
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
+			InterlockedIncrement(&(p->num_DNS));
+			InterlockedAdd(&(p->time_DNS), duration.count());
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "done in " << duration.count() << " ms, found " << IP << "\n";
 		}
@@ -187,6 +202,8 @@ static UINT thread_fun(LPVOID pParam)
 		if (ws.sendHEADRequest(host)) {
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
+			InterlockedIncrement(&(p->num_robots));
+			InterlockedAdd(&(p->time_robots), duration.count());
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "done in " << duration.count() << " ms\n";
 			ReleaseMutex(p->print_mutex);
@@ -212,8 +229,11 @@ static UINT thread_fun(LPVOID pParam)
 			//cout << HEADreply;
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
+			InterlockedIncrement(&(p->num_crawled));
+			InterlockedAdd(&(p->time_crawled), duration.count());
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
+			InterlockedAdd(&(p->size_crawl), HEADreply.size());
 			ReleaseMutex(p->print_mutex);
 		}
 		else {
@@ -278,7 +298,26 @@ static UINT thread_fun(LPVOID pParam)
 				//cout << GETreply;
 				status_end_idx = GETreply.find("\n");
 				status_code_string = GETreply.substr(9, status_end_idx);
-				status_code = stoi(status_code_string.substr(0, 3));
+				if (!status_code_string.empty()) {
+					switch (stoi(status_code_string.substr(0, 1))) {
+						case 2:
+							InterlockedIncrement(&(p->num_200));
+							break;
+						case 3:
+							InterlockedIncrement(&(p->num_300));
+							break;
+						case 4:
+							InterlockedIncrement(&(p->num_400));
+							break;
+						case 5:
+							InterlockedIncrement(&(p->num_500));
+							break;
+						default:
+							InterlockedIncrement(&(p->num_other));
+							break;
+					}
+					status_code = stoi(status_code_string.substr(0, 3));
+				}
 
 				WaitForSingleObject(p->print_mutex, INFINITE);
 				cout << "\tVerifying header... status code " << status_code << "\n";
@@ -299,6 +338,8 @@ static UINT thread_fun(LPVOID pParam)
 					}
 					stop = high_resolution_clock::now();
 					duration = duration_cast<milliseconds>(stop - start);
+					InterlockedAdd(&(p->total_links_found), count);
+					InterlockedAdd(&(p->time_crawled), duration.count());
 					WaitForSingleObject(p->print_mutex, INFINITE);
 					cout << "done in " << duration.count() << " ms with " << count << " links\n";
 					ReleaseMutex(p->print_mutex);
