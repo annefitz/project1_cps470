@@ -104,7 +104,6 @@ static UINT thread_fun(LPVOID pParam)
 				}
 
 				if (p->inq->front().size() > 200) {
-					p->inq->pop();
 					cout << "URL is too long, continuing to the next one." << endl;
 					LeaveCriticalSection(&(p->q_mutex));
 					continue;
@@ -292,7 +291,7 @@ static UINT thread_fun(LPVOID pParam)
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-					cout << "\tConnecting on page... "  << "failed\n";
+					cout << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
