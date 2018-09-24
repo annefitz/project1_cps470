@@ -282,7 +282,8 @@ static UINT thread_fun(LPVOID pParam)
 				//printf("Connection error: %d\n", WSAGetLastError());
 			}
 			start = high_resolution_clock::now();
-			if (ws.sendGETRequest(host, path, query)) { // request success
+			if (ws.sendGETRequest(host, path, query)) {
+				//std::cout << "request success\n";
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
 				EnterCriticalSection(&(p->print_mutex));
@@ -346,6 +347,9 @@ static UINT thread_fun(LPVOID pParam)
 
 				if (status_code == 200) {
 					start = high_resolution_clock::now();
+					EnterCriticalSection(&(p->print_mutex));
+						cout << "\tParsing page... ";
+					LeaveCriticalSection(&(p->print_mutex));
 					int count = 0;
 					status_end_idx = GETreply.find("http");
 
@@ -366,14 +370,14 @@ static UINT thread_fun(LPVOID pParam)
 					InterlockedAdd(&(p->total_links_found), count);
 					InterlockedAdd(&(p->time_crawled), duration.count());
 					EnterCriticalSection(&(p->print_mutex));
-						cout << "\tParsing page... " << "done in " << duration.count() << " ms with " << count << " links\n";
+						cout << "done in " << duration.count() << " ms with " << count << " links\n";
 					LeaveCriticalSection(&(p->print_mutex));
 				}
 
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "\tLoading... " << "failed\n";
+				cout << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
