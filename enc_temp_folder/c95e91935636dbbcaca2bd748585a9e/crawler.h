@@ -292,7 +292,7 @@ static UINT thread_fun(LPVOID pParam)
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-					cout << "\tConnecting on page... "  << "failed\n";
+					cout << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
