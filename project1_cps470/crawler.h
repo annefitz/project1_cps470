@@ -14,6 +14,7 @@ public:
 	HANDLE unique_mutex;
 	HANDLE finished;
 	HANDLE eventQuit;
+	HANDLE q_empty;
 	queue<string> *inq;
 	unordered_set<string> HOST_container;
 	unordered_set<string> IP_container;
@@ -42,21 +43,37 @@ static UINT thread_fun(LPVOID pParam)
 	printf("Thread %d started\n", GetCurrentThreadId());		// always print inside critical section to avoid screen garbage
 	ReleaseMutex(p->print_mutex);								// release critical section
 
-	//HANDLE	arr[] = { p->eventQuit, p->inq };
+	HANDLE	arr[] = { p->eventQuit, p->inq };
 
 	Winsock::initialize();	// initialize 
 	Winsock ws;
 
+	// url parsing vars
+	string url;
+	URLParser parser(url);
+	string host;
+	string path;
+	string query;
+	short port;
+
+	string IP;
+	string GETreply = "";
+	string HEADreply = "";
+
+	int status_end_idx;
+	string status_code_string;
+	int status_code;
+
 	while (true)
 	{
-		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
+		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
 		{
 			DWORD err = GetLastError();
 			cout << "ERROR CODE: " << err << endl;
 			break;
-		}*/
-		//else // semaQ is signaled. decreased the semaphore count by 1
-		//{
+		}
+		else // semaQ is signaled. decreased the semaphore count by 1
+		{
 		//printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
 
 		// obtain ownership of the mutex
@@ -82,7 +99,7 @@ static UINT thread_fun(LPVOID pParam)
 					break;
 				}
 				printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
-				string url = p->inq->front(); // get the item from the inputQ
+				url = p->inq->front(); // get the item from the inputQ
 				WaitForSingleObject(p->print_mutex, INFINITE);
 				cout << "URL: " << url << "\n";
 				ReleaseMutex(p->print_mutex);
@@ -100,17 +117,17 @@ static UINT thread_fun(LPVOID pParam)
 
 		// parse url
 		URLParser parser(url);
-		string host = parser.getHost();
-		string path = parser.getPath();
-		string query = parser.getQuery();
-		short port = parser.getPort();
+		host = parser.getHost();
+		path = parser.getPath();
+		query = parser.getQuery();
+		port = parser.getPort();
 
 		//cout << endl << "HOST: " << host << " PATH: " << path << " QUERY: " << query << endl;
 
-		//cout << "Path: " << path << " Host : " << host << " Port: " << port << "\n";
 		WaitForSingleObject(p->print_mutex, INFINITE);
 		cout << "\tParsing URL... host " << host << ", port " << port << "\n";
 		ReleaseMutex(p->print_mutex);
+		
 		// delay here: contact a peer, send a request, and receive/parse the response 
 
 		// check for host uniqueness
@@ -129,16 +146,16 @@ static UINT thread_fun(LPVOID pParam)
 
 		// starting connection
 		// will first find IP then connect via IP
-		WaitForSingleObject(p->print_mutex, INFINITE);
-		cout << "\tDoing DNS... ";
-		ReleaseMutex(p->print_mutex);
+		//WaitForSingleObject(p->print_mutex, INFINITE);
+		//cout << "\tDoing DNS... ";
+		//ReleaseMutex(p->print_mutex);
 		// starting timer
 		auto stop = high_resolution_clock::now();  // instantiate vars
 		auto start = high_resolution_clock::now(); // instantiate vars
 		auto duration = duration_cast<milliseconds>(stop - start);
 
 		// get IP from hostname, check for valid host/IP
-		string IP = ws.getIPfromhost(host, p->print_mutex);
+		IP = ws.getIPfromhost(host, p->print_mutex);
 		if (IP.empty()) {
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "Invalid string: neither FQDN, nor IP address\n";
@@ -151,7 +168,7 @@ static UINT thread_fun(LPVOID pParam)
 
 		if (ws.connectToServerIP(IP, port) == 1) {
 			WaitForSingleObject(p->print_mutex, INFINITE);
-			cout << "IP: " << IP << "failed\n";
+			cout << "\tDoing DNS... " << "IP: " << IP << "failed\n";
 			ReleaseMutex(p->print_mutex);
 			ws.closeSocket();
 			continue;
@@ -160,7 +177,8 @@ static UINT thread_fun(LPVOID pParam)
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
 			WaitForSingleObject(p->print_mutex, INFINITE);
-			cout << "done in " << duration.count() << " ms, found " << IP << "\n";
+			cout << "\tDoing DNS... " << "done in " << duration.count() << " ms, found " << IP << "\n";
+			ReleaseMutex(p->print_mutex);
 		}
 
 		WaitForSingleObject(p->unique_mutex, INFINITE);
@@ -200,34 +218,37 @@ static UINT thread_fun(LPVOID pParam)
 		}
 
 
-		WaitForSingleObject(p->print_mutex, INFINITE);
-		cout << "\tLoading... ";
-		ReleaseMutex(p->print_mutex);
+		//WaitForSingleObject(p->print_mutex, INFINITE);
+		//cout << "\tLoading... ";
+		//ReleaseMutex(p->print_mutex);
 		start = high_resolution_clock::now(); // start timer for loading HEAD reply
 
 		// receive HEAD reply
-		string HEADreply = "";
 		if (ws.receive(HEADreply)) {
 			//std::cout << "reply not success\n";
 			//cout << HEADreply;
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
 			WaitForSingleObject(p->print_mutex, INFINITE);
-			cout << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
+			cout << "\tLoading... " << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
 			ReleaseMutex(p->print_mutex);
 		}
 		else {
 			WaitForSingleObject(p->print_mutex, INFINITE);
-			cout << "IP: " << IP << " failed\n";
+			cout << "\tLoading... " << "IP: " << IP << " failed\n";
 			ReleaseMutex(p->print_mutex);
 			ws.closeSocket();
 			continue;
 		}
 
 		// find the status code in the reply
-		int status_end_idx = HEADreply.find("\n");
-		string status_code_string = HEADreply.substr(9, status_end_idx);
-		int status_code = stoi(status_code_string.substr(0, 3));
+		status_end_idx = HEADreply.find("\n");
+		if (status_end_idx <= 9) {
+			cout << "End index is greater than the start. HEAD reply may be messed up?" << endl;
+			continue;
+		}
+		status_code_string = HEADreply.substr(9, status_end_idx);
+		status_code = stoi(status_code_string.substr(0, 3));
 
 		WaitForSingleObject(p->print_mutex, INFINITE);
 		cout << "\tVerifying header... status code " << status_code << "\n";
@@ -266,7 +287,7 @@ static UINT thread_fun(LPVOID pParam)
 			WaitForSingleObject(p->print_mutex, INFINITE);
 			cout << "\tLoading... ";
 			ReleaseMutex(p->print_mutex);
-			string GETreply = "";
+			
 			if (ws.receive(GETreply)) {
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
@@ -291,6 +312,12 @@ static UINT thread_fun(LPVOID pParam)
 					ReleaseMutex(p->print_mutex);
 					int count = 0;
 					status_end_idx = GETreply.find("http");
+
+					if (status_end_idx >= status_code_string.size()) {
+						cout << "End index is greater than the start. GET reply may be messed up?" << endl;
+						continue;
+					}
+
 					status_code_string = GETreply.substr(status_end_idx);
 					while (status_end_idx != NULL) {
 						count++;
@@ -313,7 +340,7 @@ static UINT thread_fun(LPVOID pParam)
 				continue;
 			}
 		} // else further contact denied
-
+		
 		ws.closeSocket();
 
 		/*WaitForSingleObject(p->q_mutex, INFINITE);
@@ -322,12 +349,10 @@ static UINT thread_fun(LPVOID pParam)
 			ReleaseMutex(p->q_mutex);
 		}*/
 
-			ws.closeSocket();
-
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			EnterCriticalSection(&(p->q_mutex));
 			if (p->num_tasks == 0) {
-				SetEvent(p->eventQuit);
+				SetEvent(p->eventQuit); printf("Thread %d event quit.\n", GetCurrentThreadId());
 				//ReleaseMutex(p->q_mutex);
 				LeaveCriticalSection(&(p->q_mutex));
 				break;
@@ -346,14 +371,14 @@ static UINT thread_fun(LPVOID pParam)
 
 		//cout << "TEST"; getchar();
 		//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-		//} ------------- left the critical section ------------------
+		} //------------- left the critical section ------------------
 
 			//cout << "TEST"; getchar();
 			//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
 			} // ------------- left the critical section ------------------
 		
 	} // end of while loop for this thread
-
+	printf("Thread %d done.\n", GetCurrentThreadId());
 	Winsock::cleanUp();
 
 	// signal that this thread is exiting
