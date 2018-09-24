@@ -103,12 +103,19 @@ static UINT thread_fun(LPVOID pParam)
 					break;
 				}
 
+				if (p->inq->front().size() > 200) {
+					p->inq->pop();
+					cout << "URL is too long, continuing to the next one." << endl;
+					LeaveCriticalSection(&(p->q_mutex));
+					continue;
+				}
 				url = p->inq->front(); // get the item from the inputQ
 				p->inq->pop();
 				p->num_tasks--;
 
 				EnterCriticalSection(&(p->print_mutex));
 					printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
+
 			LeaveCriticalSection(&(p->q_mutex));
 					cout << "URL: " << url << "\n";
 				LeaveCriticalSection(&(p->print_mutex));
@@ -206,9 +213,6 @@ static UINT thread_fun(LPVOID pParam)
 
 		// construct a GET or HEAD request (in a string), send request
 		start = high_resolution_clock::now();
-		EnterCriticalSection(&(p->print_mutex));
-		cout << "\tConnecting on robots... ";
-		LeaveCriticalSection(&(p->print_mutex));
 
 		if (ws.sendHEADRequest(host)) {
 			stop = high_resolution_clock::now();
@@ -216,12 +220,12 @@ static UINT thread_fun(LPVOID pParam)
 			InterlockedIncrement(&(p->num_robots));
 			InterlockedAdd(&(p->time_robots), duration.count());
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "done in " << duration.count() << " ms\n";
+				cout << "\tConnecting on robots... " << "done in " << duration.count() << " ms\n";
 			LeaveCriticalSection(&(p->print_mutex));
 		}
 		else {
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "failed\n";
+				cout << "\tConnecting on robots... " << "failed\n";
 			LeaveCriticalSection(&(p->print_mutex));
 			ws.closeSocket();
 			continue;
@@ -241,12 +245,12 @@ static UINT thread_fun(LPVOID pParam)
 			duration = duration_cast<milliseconds>(stop - start);
 
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tLoading... " << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
+				cout << "\tLoading... " << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
 			LeaveCriticalSection(&(p->print_mutex));
 		}
 		else {
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tLoading... " << "IP: " << IP << " failed\n";
+				cout << "\tLoading... " << "IP: " << IP << " failed\n";
 			LeaveCriticalSection(&(p->print_mutex));
 			ws.closeSocket();
 			continue;
@@ -266,7 +270,7 @@ static UINT thread_fun(LPVOID pParam)
 		status_code = stoi(status_code_string.substr(0, 3));
 
 		EnterCriticalSection(&(p->print_mutex));
-		cout << "\tVerifying header... status code " << status_code << "\n";
+			cout << "\tVerifying header... status code " << status_code << "\n";
 		LeaveCriticalSection(&(p->print_mutex));
 
 		// if the status code is 400 or higher, 
@@ -278,20 +282,16 @@ static UINT thread_fun(LPVOID pParam)
 				//printf("Connection error: %d\n", WSAGetLastError());
 			}
 			start = high_resolution_clock::now();
-			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tConnecting on page... ";
-			LeaveCriticalSection(&(p->print_mutex));
-			if (ws.sendGETRequest(host, path, query)) {
-				//std::cout << "request success\n";
+			if (ws.sendGETRequest(host, path, query)) { // request success
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "done in " << duration.count() << " ms\n";
+					cout << "\tConnecting on page... " << "done in " << duration.count() << " ms\n";
 				LeaveCriticalSection(&(p->print_mutex));
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "failed\n";
+					cout << "\tConnecting on page... "  << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
@@ -299,15 +299,12 @@ static UINT thread_fun(LPVOID pParam)
 
 			// receive reply
 			start = high_resolution_clock::now();
-			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tLoading... ";
-			LeaveCriticalSection(&(p->print_mutex));
 			
 			if (ws.receive(GETreply)) {
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
+					cout << "\tLoading... " << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
 				LeaveCriticalSection(&(p->print_mutex));
 
 				InterlockedIncrement(&(p->num_crawled));
@@ -317,8 +314,8 @@ static UINT thread_fun(LPVOID pParam)
 				// find the status code in the reply
 				//cout << GETreply;
 				status_end_idx = GETreply.find("\n");
-				status_code_string = GETreply.substr(9, status_end_idx);
-				if (!status_code_string.empty()) {
+				if (status_end_idx != -1) {
+					status_code_string = GETreply.substr(9, status_end_idx);
 					switch (stoi(status_code_string.substr(0, 1))) {
 						case 2:
 							InterlockedIncrement(&(p->num_200));
@@ -338,16 +335,17 @@ static UINT thread_fun(LPVOID pParam)
 					}
 					status_code = stoi(status_code_string.substr(0, 3));
 				}
+				else {
+					ws.closeSocket();
+					continue;
+				}
 
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "\tVerifying header... status code " << status_code << "\n";
+					cout << "\tVerifying header... status code " << status_code << "\n";
 				LeaveCriticalSection(&(p->print_mutex));
 
 				if (status_code == 200) {
 					start = high_resolution_clock::now();
-					EnterCriticalSection(&(p->print_mutex));
-					cout << "\tParsing page... ";
-					LeaveCriticalSection(&(p->print_mutex));
 					int count = 0;
 					status_end_idx = GETreply.find("http");
 
@@ -368,14 +366,14 @@ static UINT thread_fun(LPVOID pParam)
 					InterlockedAdd(&(p->total_links_found), count);
 					InterlockedAdd(&(p->time_crawled), duration.count());
 					EnterCriticalSection(&(p->print_mutex));
-					cout << "done in " << duration.count() << " ms with " << count << " links\n";
+						cout << "\tParsing page... " << "done in " << duration.count() << " ms with " << count << " links\n";
 					LeaveCriticalSection(&(p->print_mutex));
 				}
 
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "failed\n";
+				cout << "\tLoading... " << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
@@ -393,7 +391,10 @@ static UINT thread_fun(LPVOID pParam)
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			EnterCriticalSection(&(p->q_mutex));
 			if (p->num_tasks == 0) {
-				SetEvent(p->eventQuit); printf("Thread %d event quit.\n", GetCurrentThreadId());
+				SetEvent(p->eventQuit);
+				EnterCriticalSection(&(p->print_mutex));
+					printf("Thread %d event quit.\n", GetCurrentThreadId());
+				LeaveCriticalSection(&(p->print_mutex));
 				//ReleaseMutex(p->q_mutex);
 				LeaveCriticalSection(&(p->q_mutex));
 				break;
