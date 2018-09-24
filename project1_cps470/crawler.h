@@ -246,10 +246,7 @@ static UINT thread_fun(LPVOID pParam)
 			//cout << HEADreply;
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
-			InterlockedIncrement(&(p->num_crawled));
-			InterlockedAdd(&(p->time_crawled), duration.count());
 			WaitForSingleObject(p->print_mutex, INFINITE);
-			InterlockedAdd(&(p->size_crawl), HEADreply.size());
 			cout << "\tLoading... " << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
 			ReleaseMutex(p->print_mutex);
 		}
@@ -314,7 +311,9 @@ static UINT thread_fun(LPVOID pParam)
 				WaitForSingleObject(p->print_mutex, INFINITE);
 				cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
 				ReleaseMutex(p->print_mutex);
-
+				InterlockedIncrement(&(p->num_crawled));
+				InterlockedAdd(&(p->time_crawled), duration.count());
+				InterlockedAdd(&(p->size_crawl), GETreply.size());
 				// find the status code in the reply
 				//cout << GETreply;
 				status_end_idx = GETreply.find("\n");
