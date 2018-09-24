@@ -4,7 +4,7 @@
 using namespace std::chrono;
 
 #define BUF_SIZE 1024
-#define TIMEOUT 10000
+#define TIMEOUTUS 10000000
 // the .h file defines all windows socket functions 
 
 class Winsock
@@ -221,12 +221,12 @@ public:
 		}
 
 		// setup the port # and protocol type
-		server.sin_family = AF_INET;  // IPv4
-		server.sin_port = htons(port);// host-to-network flips the byte order
+		server.sin_family = AF_INET;   // IPv4
+		server.sin_port = htons(port); // host-to-network flips the byte order
 									  
 		if (connect(sock, (struct sockaddr*) &server, sizeof(struct sockaddr_in)) == SOCKET_ERROR)
 		{
-			//printf("Connection error: %d\n", WSAGetLastError());
+			printf("Connection error: %d\n", WSAGetLastError());
 			return 1;
 		}
 		//printf("Successfully connected to %s (%s) on port %d\n", hostIP.c_str(), inet_ntoa(server.sin_addr),
@@ -272,7 +272,7 @@ public:
 
 		struct timeval timeout;
 		timeout.tv_sec = 10;
-		timeout.tv_usec = TIMEOUT;
+		timeout.tv_usec = TIMEOUTUS;
 
 		recv_string = "";
 		int bytes = 0;

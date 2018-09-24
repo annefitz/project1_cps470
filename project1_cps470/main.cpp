@@ -29,19 +29,20 @@ int main(int argc, char* argv[])
 	queue<string> inQ;
 	while (!fin.eof()) {
 		fin >> turl;
-		cout << turl << endl;
+		//cout << turl << endl;
 		inQ.push(turl);
 	}
-	getchar();
+
 	fin.close();
 
-	HANDLE print_m = CreateMutex(NULL, true, NULL);
+	HANDLE print_m = CreateMutexA(NULL, true, NULL);
     //HANDLE q_m = CreateMutex(NULL, true, NULL);
 	//LPCRITICAL_SECTION q_m;
-	HANDLE unique_m = CreateMutex(NULL, true, NULL);
-	HANDLE stats_m = CreateMutex(NULL, true, NULL);
-	HANDLE event_quit = CreateEvent(NULL, true, false, NULL);
-	HANDLE thread_finish = CreateSemaphore(NULL, 0, 1, NULL);
+	HANDLE unique_m = CreateMutexA(NULL, true, NULL);
+	HANDLE stats_m = CreateMutexA(NULL, true, NULL);
+	HANDLE event_quit = CreateEventA(NULL, true, false, NULL);
+	HANDLE q_empty = CreateEventA(NULL, true, false, NULL);
+	HANDLE thread_finish = CreateSemaphoreA(NULL, 0, 1, NULL);
 
 	// threading
 	Parameters p = Parameters();
@@ -83,6 +84,7 @@ int main(int argc, char* argv[])
 	//InitializeCriticalSection(p.q_mutex);
 	auto start = high_resolution_clock::now(); // instantiate vars
 
+	Winsock::initialize();
 	// spawn each thread and store them in the thread array
 	for (int i = 0; i < num_threads; i++) {
 		// t[i] = thread(thread_fun, i, ref(p));
@@ -121,7 +123,7 @@ int main(int argc, char* argv[])
 
 	delete[] t;
 
-	//Winsock::cleanUp;
+	// Winsock::cleanUp;
 
 	//printf("Enter any key to continue ...\n"); 
 	cout << "\nWAIT FOR KEYPRESS!!!!! ";
