@@ -94,6 +94,7 @@ int main(int argc, char* argv[])
 	// wait for threads to terminate
 	for (int i = 0; i < num_threads; i++) {
 		WaitForSingleObject(p.finished, INFINITE);
+		printf("\n\n THREAD %d DONE>\n\n", i);
 	}
 
 	auto stop = high_resolution_clock::now();  // instantiate vars
