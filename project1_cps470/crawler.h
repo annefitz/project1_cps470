@@ -9,9 +9,9 @@ using namespace std::chrono;
 // this class is passed to all threads, acts as shared memory
 class Parameters {
 public:
-	HANDLE print_mutex;
+	CRITICAL_SECTION print_mutex;
 	CRITICAL_SECTION q_mutex;
-	HANDLE unique_mutex;
+	CRITICAL_SECTION unique_mutex;
 	HANDLE finished;
 	HANDLE eventQuit;
 	HANDLE q_empty;
@@ -19,6 +19,7 @@ public:
 	unordered_set<string> HOST_container;
 	unordered_set<string> IP_container;
 	int num_tasks;
+
 	_Interlocked_operand_ unsigned num_HOST_unique;
 	_Interlocked_operand_ unsigned num_DNS;
 	_Interlocked_operand_ unsigned num_IP_unique;
@@ -43,6 +44,8 @@ public:
 	Parameters() {
 		//q_mutex = &q_m;
 		InitializeCriticalSection(&q_mutex);
+		InitializeCriticalSection(&print_mutex);
+		InitializeCriticalSection(&unique_mutex);
 	}
 };
 
@@ -53,9 +56,9 @@ static UINT thread_fun(LPVOID pParam)
 	//ResetEvent(p->finished);
 
 	// wait for mutex, then print and sleep inside the critical section
-	WaitForSingleObject(p->print_mutex, INFINITE);				// lock mutex
+	EnterCriticalSection(&(p->print_mutex));						// lock mutex
 	printf("Thread %d started\n", GetCurrentThreadId());		// always print inside critical section to avoid screen garbage
-	ReleaseMutex(p->print_mutex);								// release critical section
+	LeaveCriticalSection(&(p->print_mutex));									// release critical section
 
 	HANDLE	arr[] = { p->eventQuit, p->inq };
 
@@ -88,19 +91,6 @@ static UINT thread_fun(LPVOID pParam)
 		}
 		else // semaQ is signaled. decreased the semaphore count by 1
 		{
-		//printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
-
-		// obtain ownership of the mutex
-		// WaitForSingleObject(p->q_mutex, INFINITE);
-		// ------------- entered the critical section ---------------
-		if (p->num_tasks == 0 || p->inq->empty()) {
-			cout << "CHECK\n";
-			//ReleaseMutex(p->print_mutex);
-			break;
-		}
-		else // semaQ is signaled. decreased the semaphore count by 1
-		{
-
 			// obtain ownership of the mutex
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			EnterCriticalSection(&(p->q_mutex));
@@ -112,17 +102,21 @@ static UINT thread_fun(LPVOID pParam)
 					//ReleaseMutex(p->q_mutex);
 					break;
 				}
-				printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
+
 				url = p->inq->front(); // get the item from the inputQ
-				WaitForSingleObject(p->print_mutex, INFINITE);
-				cout << "URL: " << url << "\n";
-				ReleaseMutex(p->print_mutex);
 				p->inq->pop();
-				InterlockedIncrement(&(p->num_URLs));
 				p->num_tasks--;
+
+				EnterCriticalSection(&(p->print_mutex));
+					printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
+			LeaveCriticalSection(&(p->q_mutex));
+					cout << "URL: " << url << "\n";
+				LeaveCriticalSection(&(p->print_mutex));
+
+				InterlockedIncrement(&(p->num_URLs));
 			// return mutex
 			//ReleaseMutex(p->q_mutex);
-			LeaveCriticalSection(&(p->q_mutex));
+			
 			// ------------- left the critical section ------------------		
 
 			//cout << endl << "HOST: " << host << " PATH: " << path << " QUERY: " << query << endl;
@@ -138,51 +132,51 @@ static UINT thread_fun(LPVOID pParam)
 
 		//cout << endl << "HOST: " << host << " PATH: " << path << " QUERY: " << query << endl;
 
-		WaitForSingleObject(p->print_mutex, INFINITE);
+		EnterCriticalSection(&(p->print_mutex));
 		cout << "\tParsing URL... host " << host << ", port " << port << "\n";
-		ReleaseMutex(p->print_mutex);
+		LeaveCriticalSection(&(p->print_mutex));
 		
 		// delay here: contact a peer, send a request, and receive/parse the response 
 
 		// check for host uniqueness
-		WaitForSingleObject(p->unique_mutex, INFINITE);
+		EnterCriticalSection(&(p->unique_mutex));
 		if (p->HOST_container.find(host) == p->HOST_container.end()) {
 			// the HOST is unique, so add it to the container
 			p->HOST_container.insert(host);
 			cout << "\tChecking host uniqueness... passed\n";
-			ReleaseMutex(p->unique_mutex);
+			LeaveCriticalSection(&(p->unique_mutex));
 		}
 		else {
 			cout << "\tChecking host uniqueness... failed\n";
-			ReleaseMutex(p->unique_mutex);
+			LeaveCriticalSection(&(p->unique_mutex));
 			continue;
 		}
 
 		// starting connection
 		// will first find IP then connect via IP
-		//WaitForSingleObject(p->print_mutex, INFINITE);
+		//EnterCriticalSection(&(p->print_mutex));
 		//cout << "\tDoing DNS... ";
-		//ReleaseMutex(p->print_mutex);
+		//LeaveCriticalSection(&(p->print_mutex));
 		// starting timer
 		auto stop = high_resolution_clock::now();  // instantiate vars
 		auto start = high_resolution_clock::now(); // instantiate vars
 		auto duration = duration_cast<milliseconds>(stop - start);
 
 		// get IP from hostname, check for valid host/IP
-		IP = ws.getIPfromhost(host, p->print_mutex);
+		IP = ws.getIPfromhost(host);
 		if (IP.empty()) {
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "Invalid string: neither FQDN, nor IP address\n";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 			ws.closeSocket();
 			continue;
 		}
 
 		ws.createTCPSocket();
 		if (ws.connectToServerIP(IP, port) == 1) {
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "\tDoing DNS... " << "IP: " << IP << "failed\n";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 			ws.closeSocket();
 			continue;
 		}
@@ -191,53 +185,52 @@ static UINT thread_fun(LPVOID pParam)
 			duration = duration_cast<milliseconds>(stop - start);
 			InterlockedIncrement(&(p->num_DNS));
 			InterlockedAdd(&(p->time_DNS), duration.count());
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "\tDoing DNS... " << "done in " << duration.count() << " ms, found " << IP << "\n";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 		}
 
-		WaitForSingleObject(p->unique_mutex, INFINITE);
+		EnterCriticalSection(&(p->unique_mutex));
 		if (p->IP_container.find(IP) == p->IP_container.end()) {
 			// the IP is unique, so add it to the container
 			p->IP_container.insert(IP);
 			cout << "\tChecking IP uniqueness... passed\n";
-			ReleaseMutex(p->unique_mutex);
+			LeaveCriticalSection(&(p->unique_mutex));
 		}
 		else {
 			cout << "\tChecking IP uniqueness... failed\n";
-			ReleaseMutex(p->unique_mutex);
-
+			LeaveCriticalSection(&(p->unique_mutex));
 			ws.closeSocket();
 			continue;
 		}
 
 		// construct a GET or HEAD request (in a string), send request
 		start = high_resolution_clock::now();
-		WaitForSingleObject(p->print_mutex, INFINITE);
+		EnterCriticalSection(&(p->print_mutex));
 		cout << "\tConnecting on robots... ";
-		ReleaseMutex(p->print_mutex);
+		LeaveCriticalSection(&(p->print_mutex));
 
 		if (ws.sendHEADRequest(host)) {
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
 			InterlockedIncrement(&(p->num_robots));
 			InterlockedAdd(&(p->time_robots), duration.count());
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "done in " << duration.count() << " ms\n";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 		}
 		else {
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "failed\n";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 			ws.closeSocket();
 			continue;
 		}
 
 
-		//WaitForSingleObject(p->print_mutex, INFINITE);
+		//EnterCriticalSection(&(p->print_mutex));
 		//cout << "\tLoading... ";
-		//ReleaseMutex(p->print_mutex);
+		//LeaveCriticalSection(&(p->print_mutex));
 		start = high_resolution_clock::now(); // start timer for loading HEAD reply
 
 		// receive HEAD reply
@@ -246,17 +239,14 @@ static UINT thread_fun(LPVOID pParam)
 			//cout << HEADreply;
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
-			InterlockedIncrement(&(p->num_crawled));
-			InterlockedAdd(&(p->time_crawled), duration.count());
-			WaitForSingleObject(p->print_mutex, INFINITE);
-			InterlockedAdd(&(p->size_crawl), HEADreply.size());
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "\tLoading... " << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 		}
 		else {
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "\tLoading... " << "IP: " << IP << " failed\n";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 			ws.closeSocket();
 			continue;
 		}
@@ -270,9 +260,9 @@ static UINT thread_fun(LPVOID pParam)
 		status_code_string = HEADreply.substr(9, status_end_idx);
 		status_code = stoi(status_code_string.substr(0, 3));
 
-		WaitForSingleObject(p->print_mutex, INFINITE);
+		EnterCriticalSection(&(p->print_mutex));
 		cout << "\tVerifying header... status code " << status_code << "\n";
-		ReleaseMutex(p->print_mutex);
+		LeaveCriticalSection(&(p->print_mutex));
 
 		// if the status code is 400 or higher, 
 		if (status_code >= 400) {
@@ -283,37 +273,41 @@ static UINT thread_fun(LPVOID pParam)
 				//printf("Connection error: %d\n", WSAGetLastError());
 			}
 			start = high_resolution_clock::now();
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "\tConnecting on page... ";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 			if (ws.sendGETRequest(host, path, query)) {
 				//std::cout << "request success\n";
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
-				WaitForSingleObject(p->print_mutex, INFINITE);
+				EnterCriticalSection(&(p->print_mutex));
 				cout << "done in " << duration.count() << " ms\n";
-				ReleaseMutex(p->print_mutex);
+				LeaveCriticalSection(&(p->print_mutex));
 			}
 			else {
-				WaitForSingleObject(p->print_mutex, INFINITE);
+				EnterCriticalSection(&(p->print_mutex));
 				cout << "failed\n";
-				ReleaseMutex(p->print_mutex);
+				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
 			}
 
 			// receive reply
 			start = high_resolution_clock::now();
-			WaitForSingleObject(p->print_mutex, INFINITE);
+			EnterCriticalSection(&(p->print_mutex));
 			cout << "\tLoading... ";
-			ReleaseMutex(p->print_mutex);
+			LeaveCriticalSection(&(p->print_mutex));
 			
 			if (ws.receive(GETreply)) {
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
-				WaitForSingleObject(p->print_mutex, INFINITE);
+				EnterCriticalSection(&(p->print_mutex));
 				cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
-				ReleaseMutex(p->print_mutex);
+				LeaveCriticalSection(&(p->print_mutex));
+
+				InterlockedIncrement(&(p->num_crawled));
+				InterlockedAdd(&(p->time_crawled), duration.count());
+				InterlockedAdd(&(p->size_crawl), GETreply.size());
 
 				// find the status code in the reply
 				//cout << GETreply;
@@ -340,15 +334,15 @@ static UINT thread_fun(LPVOID pParam)
 					status_code = stoi(status_code_string.substr(0, 3));
 				}
 
-				WaitForSingleObject(p->print_mutex, INFINITE);
+				EnterCriticalSection(&(p->print_mutex));
 				cout << "\tVerifying header... status code " << status_code << "\n";
-				ReleaseMutex(p->print_mutex);
+				LeaveCriticalSection(&(p->print_mutex));
 
 				if (status_code == 200) {
 					start = high_resolution_clock::now();
-					WaitForSingleObject(p->print_mutex, INFINITE);
+					EnterCriticalSection(&(p->print_mutex));
 					cout << "\tParsing page... ";
-					ReleaseMutex(p->print_mutex);
+					LeaveCriticalSection(&(p->print_mutex));
 					int count = 0;
 					status_end_idx = GETreply.find("http");
 
@@ -368,16 +362,16 @@ static UINT thread_fun(LPVOID pParam)
 					duration = duration_cast<milliseconds>(stop - start);
 					InterlockedAdd(&(p->total_links_found), count);
 					InterlockedAdd(&(p->time_crawled), duration.count());
-					WaitForSingleObject(p->print_mutex, INFINITE);
+					EnterCriticalSection(&(p->print_mutex));
 					cout << "done in " << duration.count() << " ms with " << count << " links\n";
-					ReleaseMutex(p->print_mutex);
+					LeaveCriticalSection(&(p->print_mutex));
 				}
 
 			}
 			else {
-				WaitForSingleObject(p->print_mutex, INFINITE);
+				EnterCriticalSection(&(p->print_mutex));
 				cout << "failed\n";
-				ReleaseMutex(p->print_mutex);
+				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
 			}
@@ -415,9 +409,6 @@ static UINT thread_fun(LPVOID pParam)
 		//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
 		} //------------- left the critical section ------------------
 
-			//cout << "TEST"; getchar();
-			//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-			} // ------------- left the critical section ------------------
 		
 	} // end of while loop for this thread
 	printf("Thread %d done.\n", GetCurrentThreadId());

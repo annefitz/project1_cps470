@@ -35,10 +35,10 @@ int main(int argc, char* argv[])
 
 	fin.close();
 
-	HANDLE print_m = CreateMutexA(NULL, true, NULL);
+	//HANDLE print_m = CreateMutexA(NULL, true, NULL);
     //HANDLE q_m = CreateMutex(NULL, true, NULL);
 	//LPCRITICAL_SECTION q_m;
-	HANDLE unique_m = CreateMutexA(NULL, true, NULL);
+	//HANDLE unique_m = CreateMutexA(NULL, true, NULL);
 	HANDLE stats_m = CreateMutexA(NULL, true, NULL);
 	HANDLE event_quit = CreateEventA(NULL, true, false, NULL);
 	HANDLE q_empty = CreateEventA(NULL, true, false, NULL);
@@ -76,9 +76,9 @@ int main(int argc, char* argv[])
 	p.finished = thread_finish;
 	p.num_tasks = size(inQ);
 	p.inq = &inQ;
-	p.print_mutex = &print_m;
+	//p.print_mutex = &print_m;
 	//p.q_mutex = &q_m;
-	p.unique_mutex = &unique_m;
+	//p.unique_mutex = &unique_m;
 	HANDLE *t = new HANDLE[num_threads];
 
 	//InitializeCriticalSection(p.q_mutex);
@@ -119,7 +119,6 @@ int main(int argc, char* argv[])
 	printf("Crawled %d pages @ %d/s (%.2f MB)\n", p.num_crawled, crawl_ps, (float) p.size_crawl/1000000);
 	printf("Parsed %d links @ %d/s\n", p.total_links_found, links_ps);
 	printf("HTTP codes: 2xx = %d, 3xx = %d, 4xx = %d, 5xx = %d, other = %d", p.num_200, p.num_300, p.num_400, p.num_500, p.num_other);
-
 
 	delete[] t;
 

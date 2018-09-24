@@ -144,7 +144,7 @@ public:
 	}
 	*/
 
-	string getIPfromhost(string host, HANDLE print_mutex) {
+	string getIPfromhost(string host) {
 		// structure for connecting to server
 		struct sockaddr_in server;
 
