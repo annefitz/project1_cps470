@@ -254,8 +254,12 @@ static UINT thread_fun(LPVOID pParam)
 
 		// find the status code in the reply
 		status_end_idx = HEADreply.find("\n");
-		if (status_end_idx <= 9) {
+		/*if (status_end_idx <= 9) {
 			cout << "End index is greater than the start. HEAD reply may be messed up?" << endl;
+			continue;
+		}*/
+		if (status_end_idx == -1) {
+			ws.closeSocket();
 			continue;
 		}
 		status_code_string = HEADreply.substr(9, status_end_idx);
