@@ -239,7 +239,11 @@ static UINT thread_fun(LPVOID pParam)
 			//cout << HEADreply;
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
+<<<<<<< HEAD
 			EnterCriticalSection(&(p->print_mutex));
+=======
+			WaitForSingleObject(p->print_mutex, INFINITE);
+>>>>>>> 6f51e139e52df6e3a70399d7fbf94c7aacc764d2
 			cout << "\tLoading... " << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
 			LeaveCriticalSection(&(p->print_mutex));
 		}
@@ -303,12 +307,19 @@ static UINT thread_fun(LPVOID pParam)
 				duration = duration_cast<milliseconds>(stop - start);
 				EnterCriticalSection(&(p->print_mutex));
 				cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
+<<<<<<< HEAD
 				LeaveCriticalSection(&(p->print_mutex));
 
 				InterlockedIncrement(&(p->num_crawled));
 				InterlockedAdd(&(p->time_crawled), duration.count());
 				InterlockedAdd(&(p->size_crawl), GETreply.size());
 
+=======
+				ReleaseMutex(p->print_mutex);
+				InterlockedIncrement(&(p->num_crawled));
+				InterlockedAdd(&(p->time_crawled), duration.count());
+				InterlockedAdd(&(p->size_crawl), GETreply.size());
+>>>>>>> 6f51e139e52df6e3a70399d7fbf94c7aacc764d2
 				// find the status code in the reply
 				//cout << GETreply;
 				status_end_idx = GETreply.find("\n");
