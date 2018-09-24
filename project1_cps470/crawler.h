@@ -249,12 +249,8 @@ static UINT thread_fun(LPVOID pParam)
 			InterlockedIncrement(&(p->num_crawled));
 			InterlockedAdd(&(p->time_crawled), duration.count());
 			WaitForSingleObject(p->print_mutex, INFINITE);
-<<<<<<< HEAD
-			cout << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
 			InterlockedAdd(&(p->size_crawl), HEADreply.size());
-=======
 			cout << "\tLoading... " << "done in " << duration.count() << " ms with " << HEADreply.size() << " bytes\n";
->>>>>>> f483745e3f8bb2d648dc4b6fc142d81902f624d4
 			ReleaseMutex(p->print_mutex);
 		}
 		else {
@@ -356,16 +352,17 @@ static UINT thread_fun(LPVOID pParam)
 					int count = 0;
 					status_end_idx = GETreply.find("http");
 
-					if (status_end_idx >= status_code_string.size()) {
+					/*if (status_end_idx >= status_code_string.size()) {
 						cout << "End index is greater than the start. GET reply may be messed up?" << endl;
 						continue;
-					}
-
-					status_code_string = GETreply.substr(status_end_idx);
-					while (status_end_idx != NULL) {
-						count++;
-						status_end_idx = status_code_string.find("http") + 1;
-						status_code_string = status_code_string.substr(status_end_idx);
+					}*/
+					if (status_end_idx != -1) {
+						status_code_string = GETreply.substr(status_end_idx);
+						while (status_end_idx != NULL) {
+							count++;
+							status_end_idx = status_code_string.find("http") + 1;
+							status_code_string = status_code_string.substr(status_end_idx);
+						}
 					}
 					stop = high_resolution_clock::now();
 					duration = duration_cast<milliseconds>(stop - start);
