@@ -168,7 +168,6 @@ static UINT thread_fun(LPVOID pParam)
 			EnterCriticalSection(&(p->print_mutex));
 			cout << "Invalid string: neither FQDN, nor IP address\n";
 			LeaveCriticalSection(&(p->print_mutex));
-			ws.closeSocket();
 			continue;
 		}
 
@@ -317,8 +316,8 @@ static UINT thread_fun(LPVOID pParam)
 				// find the status code in the reply
 				//cout << GETreply;
 				status_end_idx = GETreply.find("\n");
-				status_code_string = GETreply.substr(9, status_end_idx);
-				if (!status_code_string.empty()) {
+				if (status_end_idx != -1) {
+					status_code_string = GETreply.substr(9, status_end_idx);
 					switch (stoi(status_code_string.substr(0, 1))) {
 						case 2:
 							InterlockedIncrement(&(p->num_200));
@@ -337,6 +336,10 @@ static UINT thread_fun(LPVOID pParam)
 							break;
 					}
 					status_code = stoi(status_code_string.substr(0, 3));
+				}
+				else {
+					ws.closeSocket();
+					continue;
 				}
 
 				EnterCriticalSection(&(p->print_mutex));
