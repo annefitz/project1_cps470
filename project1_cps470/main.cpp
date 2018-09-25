@@ -18,6 +18,7 @@ int main(int argc, char* argv[])
 
 	if (fin.fail()) {
 		cout << "File failed to open.\n";
+		getchar();
 		return 1;
 	}
 	else {
@@ -39,9 +40,9 @@ int main(int argc, char* argv[])
     //HANDLE q_m = CreateMutex(NULL, true, NULL);
 	//LPCRITICAL_SECTION q_m;
 	//HANDLE unique_m = CreateMutexA(NULL, true, NULL);
-	HANDLE stats_m = CreateMutexA(NULL, true, NULL);
-	HANDLE event_quit = CreateEventA(NULL, true, false, NULL);
-	HANDLE q_empty = CreateEventA(NULL, true, false, NULL);
+	//HANDLE stats_m = CreateMutexA(NULL, true, NULL);
+	HANDLE event_quit = CreateEventA(NULL, false, false, NULL);
+	//HANDLE q_empty = CreateEventA(NULL, true, false, NULL);
 	HANDLE thread_finish = CreateSemaphoreA(NULL, 0, 1, NULL);
 
 	// threading
@@ -80,7 +81,6 @@ int main(int argc, char* argv[])
 	//InitializeCriticalSection(p.q_mutex);
 	auto start = high_resolution_clock::now(); // instantiate vars
 
-	Winsock::initialize();
 	// spawn each thread and store them in the thread array
 	for (int i = 0; i < num_threads; i++) {
 		// t[i] = thread(thread_fun, i, ref(p));
