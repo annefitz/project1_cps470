@@ -266,7 +266,7 @@ static UINT thread_fun(LPVOID pParam)
 			ws.closeSocket();
 			continue;
 		}
-		status_code_string = HEADreply.substr(9, status_end_idx);
+		status_code_string = HEADreply.substr(9, status_end_idx-10);
 		status_code = stoi(status_code_string.substr(0, 3));
 
 		EnterCriticalSection(&(p->print_mutex));
@@ -316,7 +316,7 @@ static UINT thread_fun(LPVOID pParam)
 				//cout << GETreply;
 				status_end_idx = GETreply.find("\n");
 				if (status_end_idx != -1) {
-					status_code_string = GETreply.substr(9, status_end_idx);
+					status_code_string = GETreply.substr(9, status_end_idx-10);
 					switch (stoi(status_code_string.substr(0, 1))) {
 						case 2:
 							InterlockedIncrement(&(p->num_200));
@@ -390,7 +390,7 @@ static UINT thread_fun(LPVOID pParam)
 		}*/
 
 			//WaitForSingleObject(p->q_mutex, INFINITE);
-			EnterCriticalSection(&(p->q_mutex));
+			/*EnterCriticalSection(&(p->q_mutex));
 			if (p->num_tasks == 0) {
 				SetEvent(p->eventQuit);
 				EnterCriticalSection(&(p->print_mutex));
@@ -400,7 +400,7 @@ static UINT thread_fun(LPVOID pParam)
 				LeaveCriticalSection(&(p->q_mutex));
 				break;
 			}
-			LeaveCriticalSection(&(p->q_mutex));
+			LeaveCriticalSection(&(p->q_mutex));*/
 
 		// obtain ownership of the mutex
 		//WaitForSingleObject(p->q_mutex, INFINITE);
