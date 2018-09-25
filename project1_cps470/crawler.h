@@ -79,7 +79,7 @@ static UINT thread_fun(LPVOID pParam)
 
 	int status_end_idx;
 	string status_code_string;
-	int status_code;
+	string status_code;
 
 	while (true)
 	{
@@ -105,6 +105,7 @@ static UINT thread_fun(LPVOID pParam)
 
 				if (p->inq->front().size() > 200) {
 					p->inq->pop();
+					p->num_tasks--;
 					cout << "URL is too long, continuing to the next one." << endl;
 					LeaveCriticalSection(&(p->q_mutex));
 					continue;
@@ -175,7 +176,6 @@ static UINT thread_fun(LPVOID pParam)
 			EnterCriticalSection(&(p->print_mutex));
 			cout << "Invalid string: neither FQDN, nor IP address\n";
 			LeaveCriticalSection(&(p->print_mutex));
-			ws.closeSocket();
 			continue;
 		}
 
@@ -267,14 +267,14 @@ static UINT thread_fun(LPVOID pParam)
 			continue;
 		}
 		status_code_string = HEADreply.substr(9, status_end_idx-10);
-		status_code = stoi(status_code_string.substr(0, 3));
+		status_code = status_code_string.substr(0, 3);
 
 		EnterCriticalSection(&(p->print_mutex));
 			cout << "\tVerifying header... status code " << status_code << "\n";
 		LeaveCriticalSection(&(p->print_mutex));
 
 		// if the status code is 400 or higher, 
-		if (status_code >= 400 && status_code < 500) {
+		if (status_code.at(0) == '4') {
 			ws.closeSocket();
 			ws.createTCPSocket();
 
@@ -317,24 +317,24 @@ static UINT thread_fun(LPVOID pParam)
 				status_end_idx = GETreply.find("\n");
 				if (status_end_idx != -1) {
 					status_code_string = GETreply.substr(9, status_end_idx-10);
-					switch (stoi(status_code_string.substr(0, 1))) {
-						case 2:
+					switch (status_code_string.at(0)) {
+						case '2':
 							InterlockedIncrement(&(p->num_200));
 							break;
-						case 3:
+						case '3':
 							InterlockedIncrement(&(p->num_300));
 							break;
-						case 4:
+						case '4':
 							InterlockedIncrement(&(p->num_400));
 							break;
-						case 5:
+						case '5':
 							InterlockedIncrement(&(p->num_500));
 							break;
 						default:
 							InterlockedIncrement(&(p->num_other));
 							break;
 					}
-					status_code = stoi(status_code_string.substr(0, 3));
+					status_code = status_code_string.substr(0, 3);
 				}
 				else {
 					ws.closeSocket();
@@ -345,7 +345,7 @@ static UINT thread_fun(LPVOID pParam)
 					cout << "\tVerifying header... status code " << status_code << "\n";
 				LeaveCriticalSection(&(p->print_mutex));
 
-				if (status_code == 200) {
+				if (status_code.at(0) == '2') {
 					start = high_resolution_clock::now();
 					int count = 0;
 					status_end_idx = GETreply.find("http");
@@ -418,9 +418,17 @@ static UINT thread_fun(LPVOID pParam)
 
 		
 	} // end of while loop for this thread
+
 	EnterCriticalSection(&(p->print_mutex));
 		printf("-----Thread %d done.\n", GetCurrentThreadId());
 	LeaveCriticalSection(&(p->print_mutex));
+
+	EnterCriticalSection(&(p->q_mutex));
+		EnterCriticalSection(&(p->print_mutex));
+		printf("-----!!-----Tasks left: %d\n", p->num_tasks);
+		LeaveCriticalSection(&(p->print_mutex));
+	LeaveCriticalSection(&(p->q_mutex));
+
 	Winsock::cleanUp();
 
 	// signal that this thread is exiting
