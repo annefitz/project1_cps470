@@ -83,14 +83,14 @@ static UINT thread_fun(LPVOID pParam)
 
 	while (true)
 	{
-		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
+		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
 		{
 			DWORD err = GetLastError();
 			cout << "ERROR CODE: " << err << endl;
 			break;
 		}
 		else // semaQ is signaled. decreased the semaphore count by 1
-		{
+		{*/
 			// obtain ownership of the mutex
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			EnterCriticalSection(&(p->q_mutex));
@@ -274,12 +274,13 @@ static UINT thread_fun(LPVOID pParam)
 		LeaveCriticalSection(&(p->print_mutex));
 
 		// if the status code is 400 or higher, 
-		if (status_code >= 400) {
+		if (status_code >= 400 && status_code < 500) {
 			ws.closeSocket();
 			ws.createTCPSocket();
 
 			if (ws.connectToServerIP(IP, port) != 0) {
 				//printf("Connection error: %d\n", WSAGetLastError());
+				continue;
 			}
 			start = high_resolution_clock::now();
 			if (ws.sendGETRequest(host, path, query)) { // request success
@@ -373,7 +374,7 @@ static UINT thread_fun(LPVOID pParam)
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "\tLoading... " << "failed\n";
+					cout << "\tLoading... " << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
@@ -413,11 +414,13 @@ static UINT thread_fun(LPVOID pParam)
 
 		//cout << "TEST"; getchar();
 		//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-		} //------------- left the critical section ------------------
+		//} //------------- left the critical section ------------------
 
 		
 	} // end of while loop for this thread
-	printf("Thread %d done.\n", GetCurrentThreadId());
+	EnterCriticalSection(&(p->print_mutex));
+		printf("-----Thread %d done.\n", GetCurrentThreadId());
+	LeaveCriticalSection(&(p->print_mutex));
 	Winsock::cleanUp();
 
 	// signal that this thread is exiting

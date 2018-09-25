@@ -212,7 +212,7 @@ public:
 		DWORD IP = inet_addr(hostIP.c_str());
 		if (IP == INADDR_NONE)
 		{ 
-			//printf("Invalid IP string: nor IP address\n");
+			printf("Invalid IP string: nor IP address\n");
 			return 1;  // 1 means failed						
 		}
 		else
@@ -226,7 +226,12 @@ public:
 									  
 		if (connect(sock, (struct sockaddr*) &server, sizeof(struct sockaddr_in)) == SOCKET_ERROR)
 		{
-			printf("Connection error: %d\n", WSAGetLastError());
+			if (WSAGetLastError() == 10060) {
+				printf("\tIP: %s - Server Timeout... No response.\n", hostIP.c_str());
+			}
+			else {
+				printf("Connection error: %d\n", WSAGetLastError());
+			}
 			return 1;
 		}
 		//printf("Successfully connected to %s (%s) on port %d\n", hostIP.c_str(), inet_ntoa(server.sin_addr),
