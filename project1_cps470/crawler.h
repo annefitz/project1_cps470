@@ -28,11 +28,6 @@ public:
 	_Interlocked_operand_ unsigned num_crawled;
 	_Interlocked_operand_ long total_links_found;
 
-	_Interlocked_operand_ long time_DNS;
-	_Interlocked_operand_ long time_robots;
-	_Interlocked_operand_ long time_crawled;
-	_Interlocked_operand_ long time_links;
-
 	_Interlocked_operand_ long size_crawl;
 
 	_Interlocked_operand_ unsigned num_200;
@@ -112,7 +107,6 @@ static UINT thread_fun(LPVOID pParam)
 			LeaveCriticalSection(&(p->q_mutex));
 					cout << "URL: " << url << "\n";
 				LeaveCriticalSection(&(p->print_mutex));
-
 				InterlockedIncrement(&(p->num_URLs));
 			// return mutex
 			//ReleaseMutex(p->q_mutex);
@@ -183,7 +177,6 @@ static UINT thread_fun(LPVOID pParam)
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
 			InterlockedIncrement(&(p->num_DNS));
-			InterlockedAdd(&(p->time_DNS), duration.count());
 			EnterCriticalSection(&(p->print_mutex));
 			cout << "\tDoing DNS... " << "done in " << duration.count() << " ms, found " << IP << "\n";
 			LeaveCriticalSection(&(p->print_mutex));
@@ -213,7 +206,6 @@ static UINT thread_fun(LPVOID pParam)
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
 			InterlockedIncrement(&(p->num_robots));
-			InterlockedAdd(&(p->time_robots), duration.count());
 			EnterCriticalSection(&(p->print_mutex));
 			cout << "done in " << duration.count() << " ms\n";
 			LeaveCriticalSection(&(p->print_mutex));
@@ -310,7 +302,6 @@ static UINT thread_fun(LPVOID pParam)
 				LeaveCriticalSection(&(p->print_mutex));
 
 				InterlockedIncrement(&(p->num_crawled));
-				InterlockedAdd(&(p->time_crawled), duration.count());
 				InterlockedAdd(&(p->size_crawl), GETreply.size());
 
 				// find the status code in the reply
@@ -369,7 +360,6 @@ static UINT thread_fun(LPVOID pParam)
 					stop = high_resolution_clock::now();
 					duration = duration_cast<milliseconds>(stop - start);
 					InterlockedAdd(&(p->total_links_found), count);
-					InterlockedAdd(&(p->time_crawled), duration.count());
 					EnterCriticalSection(&(p->print_mutex));
 					cout << "done in " << duration.count() << " ms with " << count << " links\n";
 					LeaveCriticalSection(&(p->print_mutex));
