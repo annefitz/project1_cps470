@@ -83,6 +83,8 @@ static UINT thread_fun(LPVOID pParam)
 
 	while (true)
 	{
+		ws.closeSocket();
+		
 		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
 		{
 			DWORD err = GetLastError();
@@ -97,7 +99,6 @@ static UINT thread_fun(LPVOID pParam)
 				// ------------- entered the critical section ---------------
 				if (p->num_tasks == 0 || p->inq->empty()) {
 					cout << "CHECK\n";
-					SetEvent(p->eventQuit);
 					LeaveCriticalSection(&(p->q_mutex));
 					//ReleaseMutex(p->q_mutex);
 					break;
@@ -182,9 +183,9 @@ static UINT thread_fun(LPVOID pParam)
 		ws.createTCPSocket();
 		if (ws.connectToServerIP(IP, port) == 1) {
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tDoing DNS... " << "IP: " << IP << "failed\n";
+				cout << "\tDoing DNS... " << "IP: " << IP << "failed\n";
 			LeaveCriticalSection(&(p->print_mutex));
-			ws.closeSocket();
+			
 			continue;
 		}
 		else {
@@ -192,22 +193,27 @@ static UINT thread_fun(LPVOID pParam)
 			duration = duration_cast<milliseconds>(stop - start);
 			InterlockedIncrement(&(p->num_DNS));
 			InterlockedAdd(&(p->time_DNS), duration.count());
+
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tDoing DNS... " << "done in " << duration.count() << " ms, found " << IP << "\n";
+				cout << "\tDoing DNS... " << "done in " << duration.count() << " ms, found " << IP << "\n";
 			LeaveCriticalSection(&(p->print_mutex));
 		}
 
 		EnterCriticalSection(&(p->unique_mutex));
 		if (p->IP_container.find(IP) == p->IP_container.end()) {
 			// the IP is unique, so add it to the container
-			p->IP_container.insert(IP);
-			cout << "\tChecking IP uniqueness... passed\n";
+				p->IP_container.insert(IP);
+				EnterCriticalSection(&(p->print_mutex));
+					cout << "\tChecking IP uniqueness... passed\n";
+				LeaveCriticalSection(&(p->print_mutex));
 			LeaveCriticalSection(&(p->unique_mutex));
 		}
 		else {
-			cout << "\tChecking IP uniqueness... failed\n";
+				EnterCriticalSection(&(p->print_mutex));
+					cout << "\tChecking IP uniqueness... failed\n";
+				LeaveCriticalSection(&(p->print_mutex));
 			LeaveCriticalSection(&(p->unique_mutex));
-			ws.closeSocket();
+			
 			continue;
 		}
 
@@ -227,7 +233,7 @@ static UINT thread_fun(LPVOID pParam)
 			EnterCriticalSection(&(p->print_mutex));
 				cout << "\tConnecting on robots... " << "failed\n";
 			LeaveCriticalSection(&(p->print_mutex));
-			ws.closeSocket();
+			
 			continue;
 		}
 
@@ -252,7 +258,7 @@ static UINT thread_fun(LPVOID pParam)
 			EnterCriticalSection(&(p->print_mutex));
 				cout << "\tLoading... " << "IP: " << IP << " failed\n";
 			LeaveCriticalSection(&(p->print_mutex));
-			ws.closeSocket();
+			
 			continue;
 		}
 
@@ -263,7 +269,7 @@ static UINT thread_fun(LPVOID pParam)
 			continue;
 		}*/
 		if (status_end_idx == -1) {
-			ws.closeSocket();
+			
 			continue;
 		}
 		status_code_string = HEADreply.substr(9, status_end_idx-10);
@@ -273,15 +279,17 @@ static UINT thread_fun(LPVOID pParam)
 			cout << "\tVerifying header... status code " << status_code << "\n";
 		LeaveCriticalSection(&(p->print_mutex));
 
-		// if the status code is 400 or higher, 
+		// if the status code is 4XX
 		if (status_code.at(0) == '4') {
-			ws.closeSocket();
+			
 			ws.createTCPSocket();
 
-			if (ws.connectToServerIP(IP, port) != 0) {
+			if (ws.connectToServerIP(IP, port) == 1) {
 				//printf("Connection error: %d\n", WSAGetLastError());
+				
 				continue;
 			}
+
 			start = high_resolution_clock::now();
 			if (ws.sendGETRequest(host, path, query)) { // request success
 				stop = high_resolution_clock::now();
@@ -294,7 +302,7 @@ static UINT thread_fun(LPVOID pParam)
 				EnterCriticalSection(&(p->print_mutex));
 					cout << "\tConnecting on page... "  << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
-				ws.closeSocket();
+				
 				continue;
 			}
 
@@ -337,7 +345,7 @@ static UINT thread_fun(LPVOID pParam)
 					status_code = status_code_string.substr(0, 3);
 				}
 				else {
-					ws.closeSocket();
+					
 					continue;
 				}
 
@@ -376,12 +384,12 @@ static UINT thread_fun(LPVOID pParam)
 				EnterCriticalSection(&(p->print_mutex));
 					cout << "\tLoading... " << "failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
-				ws.closeSocket();
+				
 				continue;
 			}
 		} // else further contact denied
 		
-		ws.closeSocket();
+		
 
 		/*WaitForSingleObject(p->q_mutex, INFINITE);
 		if (p->num_tasks == 0) {
