@@ -67,6 +67,7 @@ static UINT thread_fun(LPVOID pParam)
 	string path;
 	string query;
 	short port;
+	int count;
 
 	string IP;
 	string GETreply = "";
@@ -78,14 +79,14 @@ static UINT thread_fun(LPVOID pParam)
 
 	while (true)
 	{
-		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
+		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
 		{
 			DWORD err = GetLastError();
 			cout << "ERROR CODE: " << err << endl;
 			break;
 		}
 		else // semaQ is signaled. decreased the semaphore count by 1
-		{
+		{*/
 			// obtain ownership of the mutex
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			EnterCriticalSection(&(p->q_mutex));
@@ -104,7 +105,7 @@ static UINT thread_fun(LPVOID pParam)
 
 				EnterCriticalSection(&(p->print_mutex));
 					printf("Thread %d: num_tasks_left = %d\n", GetCurrentThreadId(), p->num_tasks);
-			LeaveCriticalSection(&(p->q_mutex));
+				LeaveCriticalSection(&(p->q_mutex));
 					cout << "URL: " << url << "\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				InterlockedIncrement(&(p->num_URLs));
@@ -267,6 +268,8 @@ static UINT thread_fun(LPVOID pParam)
 
 			if (ws.connectToServerIP(IP, port) != 0) {
 				//printf("Connection error: %d\n", WSAGetLastError());
+				ws.closeSocket();
+				continue;
 			}
 			start = high_resolution_clock::now();
 			EnterCriticalSection(&(p->print_mutex));
@@ -342,7 +345,7 @@ static UINT thread_fun(LPVOID pParam)
 					EnterCriticalSection(&(p->print_mutex));
 					cout << "\tParsing page... ";
 					LeaveCriticalSection(&(p->print_mutex));
-					int count = 0;
+					count = 0;
 					status_end_idx = GETreply.find("http");
 
 					/*if (status_end_idx >= status_code_string.size()) {
@@ -408,7 +411,7 @@ static UINT thread_fun(LPVOID pParam)
 		} //------------- left the critical section ------------------
 
 		
-	} // end of while loop for this thread
+	//} // end of while loop for this thread
 	printf("Thread %d done.\n", GetCurrentThreadId());
 	Winsock::cleanUp();
 
