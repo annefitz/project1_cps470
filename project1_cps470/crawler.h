@@ -75,7 +75,7 @@ static UINT thread_fun(LPVOID pParam)
 
 	int status_end_idx;
 	string status_code_string;
-	int status_code;
+	//int status_code;
 
 	while (true)
 	{
@@ -255,14 +255,14 @@ static UINT thread_fun(LPVOID pParam)
 			continue;
 		}
 		status_code_string = HEADreply.substr(9, status_end_idx);
-		status_code = stoi(status_code_string.substr(0, 3));
+		//status_code = stoi(status_code_string.substr(0, 3));
 
 		EnterCriticalSection(&(p->print_mutex));
-		cout << "\tVerifying header... status code " << status_code << "\n";
+		cout << "\tVerifying header... status code " << status_code_string.substr(0,3) << "\n";
 		LeaveCriticalSection(&(p->print_mutex));
 
 		// if the status code is 400 or higher, 
-		if (status_code >= 400) {
+		if (status_code_string.at(0) == '4') {
 			ws.closeSocket();
 			ws.createTCPSocket();
 
@@ -312,24 +312,24 @@ static UINT thread_fun(LPVOID pParam)
 				status_end_idx = GETreply.find("\n");
 				if (status_end_idx != -1) {
 					status_code_string = GETreply.substr(9, status_end_idx);
-					switch (stoi(status_code_string.substr(0, 1))) {
-						case 2:
+					switch (status_code_string.at(0)) {
+						case '2':
 							InterlockedIncrement(&(p->num_200));
 							break;
-						case 3:
+						case '3':
 							InterlockedIncrement(&(p->num_300));
 							break;
-						case 4:
+						case '4':
 							InterlockedIncrement(&(p->num_400));
 							break;
-						case 5:
+						case '5':
 							InterlockedIncrement(&(p->num_500));
 							break;
 						default:
 							InterlockedIncrement(&(p->num_other));
 							break;
 					}
-					status_code = stoi(status_code_string.substr(0, 3));
+					//status_code = stoi(status_code_string.substr(0, 3));
 				}
 				else {
 					ws.closeSocket();
@@ -337,10 +337,10 @@ static UINT thread_fun(LPVOID pParam)
 				}
 
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "\tVerifying header... status code " << status_code << "\n";
+				cout << "\tVerifying header... status code " << status_code_string.substr(0, 3) << "\n";
 				LeaveCriticalSection(&(p->print_mutex));
 
-				if (status_code == 200) {
+				if (status_code_string.at(0) == '2') {
 					start = high_resolution_clock::now();
 					EnterCriticalSection(&(p->print_mutex));
 					cout << "\tParsing page... ";
@@ -408,10 +408,10 @@ static UINT thread_fun(LPVOID pParam)
 
 		//cout << "TEST"; getchar();
 		//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-		} //------------- left the critical section ------------------
+		//} //------------- left the critical section ------------------
 
 		
-	//} // end of while loop for this thread
+	} // end of while loop for this thread
 	printf("Thread %d done.\n", GetCurrentThreadId());
 	Winsock::cleanUp();
 
