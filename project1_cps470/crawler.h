@@ -75,7 +75,11 @@ static UINT thread_fun(LPVOID pParam)
 
 	int status_end_idx;
 	string status_code_string;
+<<<<<<< HEAD
 	//int status_code;
+=======
+	// int status_code;
+>>>>>>> 3f0ab7cbe05666945747decef28dc63fec17a4c9
 
 	while (true)
 	{
@@ -92,7 +96,7 @@ static UINT thread_fun(LPVOID pParam)
 			EnterCriticalSection(&(p->q_mutex));
 				// ------------- entered the critical section ---------------
 				if (p->num_tasks == 0 || p->inq->empty()) {
-					cout << "CHECK\n";
+					//cout << "CHECK\n";
 					SetEvent(p->eventQuit);
 					LeaveCriticalSection(&(p->q_mutex));
 					//ReleaseMutex(p->q_mutex);
@@ -380,7 +384,7 @@ static UINT thread_fun(LPVOID pParam)
 		if (p->num_tasks == 0) {
 			SetEvent(p->eventQuit);
 			ReleaseMutex(p->q_mutex);
-		}*/
+		}
 
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			/*EnterCriticalSection(&(p->q_mutex));
