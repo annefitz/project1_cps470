@@ -79,14 +79,14 @@ static UINT thread_fun(LPVOID pParam)
 
 	while (true)
 	{
-		/*if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
+		if (WaitForMultipleObjects(2, arr, false, INFINITE) == WAIT_OBJECT_0) // the eventQuit has been signaled
 		{
 			DWORD err = GetLastError();
 			cout << "ERROR CODE: " << err << endl;
 			break;
 		}
 		else // semaQ is signaled. decreased the semaphore count by 1
-		{*/
+		{
 			// obtain ownership of the mutex
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			EnterCriticalSection(&(p->q_mutex));
@@ -96,7 +96,7 @@ static UINT thread_fun(LPVOID pParam)
 					SetEvent(p->eventQuit);
 					LeaveCriticalSection(&(p->q_mutex));
 					//ReleaseMutex(p->q_mutex);
-					break;
+					//break;
 				}
 
 				url = p->inq->front(); // get the item from the inputQ
@@ -246,6 +246,10 @@ static UINT thread_fun(LPVOID pParam)
 
 		// find the status code in the reply
 		status_end_idx = HEADreply.find("\n");
+		/*if (status_end_idx <= 9) {
+			cout << "End index is greater than the start. HEAD reply may be messed up?" << endl;
+			continue;
+		}*/
 		if (status_end_idx == -1) {
 			ws.closeSocket();
 			continue;
@@ -383,14 +387,14 @@ static UINT thread_fun(LPVOID pParam)
 		}*/
 
 			//WaitForSingleObject(p->q_mutex, INFINITE);
-			/*EnterCriticalSection(&(p->q_mutex));
+			EnterCriticalSection(&(p->q_mutex));
 			if (p->num_tasks == 0) {
 				SetEvent(p->eventQuit); printf("Thread %d event quit.\n", GetCurrentThreadId());
 				//ReleaseMutex(p->q_mutex);
 				LeaveCriticalSection(&(p->q_mutex));
-				break;
+				//break;
 			}
-			LeaveCriticalSection(&(p->q_mutex));*/
+			LeaveCriticalSection(&(p->q_mutex));
 
 		// obtain ownership of the mutex
 		//WaitForSingleObject(p->q_mutex, INFINITE);
@@ -404,7 +408,7 @@ static UINT thread_fun(LPVOID pParam)
 
 		//cout << "TEST"; getchar();
 		//ReleaseMutex(p->q_mutex);  // release the ownership of the mutex object to other threads
-		//} //------------- left the critical section ------------------
+		} //------------- left the critical section ------------------
 
 		
 	} // end of while loop for this thread
