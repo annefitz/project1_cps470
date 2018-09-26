@@ -9,9 +9,9 @@ using namespace std::chrono;
 // this class is passed to all threads, acts as shared memory
 class Parameters {
 public:
-	CRITICAL_SECTION print_mutex;
-	CRITICAL_SECTION q_mutex;
-	CRITICAL_SECTION unique_mutex;
+	_RTL_CRITICAL_SECTION print_mutex;
+	_RTL_CRITICAL_SECTION q_mutex;
+	_RTL_CRITICAL_SECTION unique_mutex;
 	HANDLE finished;
 	HANDLE eventQuit;
 	HANDLE q_empty;
@@ -75,11 +75,8 @@ static UINT thread_fun(LPVOID pParam)
 
 	int status_end_idx;
 	string status_code_string;
-<<<<<<< HEAD
+
 	//int status_code;
-=======
-	// int status_code;
->>>>>>> 3f0ab7cbe05666945747decef28dc63fec17a4c9
 
 	while (true)
 	{
@@ -97,7 +94,7 @@ static UINT thread_fun(LPVOID pParam)
 				// ------------- entered the critical section ---------------
 				if (p->num_tasks == 0 || p->inq->empty()) {
 					//cout << "CHECK\n";
-					SetEvent(p->eventQuit);
+					//SetEvent(p->eventQuit);
 					LeaveCriticalSection(&(p->q_mutex));
 					//ReleaseMutex(p->q_mutex);
 					break;
@@ -203,21 +200,18 @@ static UINT thread_fun(LPVOID pParam)
 
 		// construct a GET or HEAD request (in a string), send request
 		start = high_resolution_clock::now();
-		EnterCriticalSection(&(p->print_mutex));
-		cout << "\tConnecting on robots... ";
-		LeaveCriticalSection(&(p->print_mutex));
 
 		if (ws.sendHEADRequest(host)) {
 			stop = high_resolution_clock::now();
 			duration = duration_cast<milliseconds>(stop - start);
 			InterlockedIncrement(&(p->num_robots));
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "done in " << duration.count() << " ms\n";
+			cout << "\tConnecting on robots... done in " << duration.count() << " ms\n";
 			LeaveCriticalSection(&(p->print_mutex));
 		}
 		else {
 			EnterCriticalSection(&(p->print_mutex));
-			cout << "failed\n";
+			cout << "\tConnecting on robots... failed\n";
 			LeaveCriticalSection(&(p->print_mutex));
 			ws.closeSocket();
 			continue;
@@ -272,20 +266,17 @@ static UINT thread_fun(LPVOID pParam)
 				continue;
 			}
 			start = high_resolution_clock::now();
-			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tConnecting on page... ";
-			LeaveCriticalSection(&(p->print_mutex));
 			if (ws.sendGETRequest(host, path, query)) {
 				//std::cout << "request success\n";
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "done in " << duration.count() << " ms\n";
+				cout << "\tConnecting on page... done in " << duration.count() << " ms\n";
 				LeaveCriticalSection(&(p->print_mutex));
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "failed\n";
+				cout << "\tConnecting on page... failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
@@ -293,15 +284,12 @@ static UINT thread_fun(LPVOID pParam)
 
 			// receive reply
 			start = high_resolution_clock::now();
-			EnterCriticalSection(&(p->print_mutex));
-			cout << "\tLoading... ";
-			LeaveCriticalSection(&(p->print_mutex));
 			
 			if (ws.receive(GETreply)) {
 				stop = high_resolution_clock::now();
 				duration = duration_cast<milliseconds>(stop - start);
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
+				cout << "\tLoading... done in " << duration.count() << " ms with " << GETreply.size() << " bytes\n";
 				LeaveCriticalSection(&(p->print_mutex));
 
 				InterlockedIncrement(&(p->num_crawled));
@@ -371,7 +359,7 @@ static UINT thread_fun(LPVOID pParam)
 			}
 			else {
 				EnterCriticalSection(&(p->print_mutex));
-				cout << "failed\n";
+				cout << "\tLoading... failed\n";
 				LeaveCriticalSection(&(p->print_mutex));
 				ws.closeSocket();
 				continue;
@@ -416,12 +404,11 @@ static UINT thread_fun(LPVOID pParam)
 	Winsock::cleanUp();
 
 	// signal that this thread is exiting
-	ReleaseSemaphore(p->finished, 1, NULL);
+	EnterCriticalSection(&(p->q_mutex));
+		Sleep(10);
+		ReleaseSemaphore(p->finished, 1, NULL);
+	LeaveCriticalSection(&(p->q_mutex));
 
 	return 0;
 }
 
-static bool timeout(int time) {
-	Sleep(time);
-	return true;
-}
