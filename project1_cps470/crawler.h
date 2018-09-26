@@ -75,7 +75,7 @@ static UINT thread_fun(LPVOID pParam)
 
 	int status_end_idx;
 	string status_code_string;
-	//int status_code;
+	// int status_code;
 
 	while (true)
 	{
@@ -92,7 +92,7 @@ static UINT thread_fun(LPVOID pParam)
 			EnterCriticalSection(&(p->q_mutex));
 				// ------------- entered the critical section ---------------
 				if (p->num_tasks == 0 || p->inq->empty()) {
-					cout << "CHECK\n";
+					//cout << "CHECK\n";
 					SetEvent(p->eventQuit);
 					LeaveCriticalSection(&(p->q_mutex));
 					//ReleaseMutex(p->q_mutex);
@@ -384,7 +384,7 @@ static UINT thread_fun(LPVOID pParam)
 		if (p->num_tasks == 0) {
 			SetEvent(p->eventQuit);
 			ReleaseMutex(p->q_mutex);
-		}*/
+		}
 
 			//WaitForSingleObject(p->q_mutex, INFINITE);
 			EnterCriticalSection(&(p->q_mutex));
@@ -394,7 +394,7 @@ static UINT thread_fun(LPVOID pParam)
 				LeaveCriticalSection(&(p->q_mutex));
 				break;
 			}
-			LeaveCriticalSection(&(p->q_mutex));
+			LeaveCriticalSection(&(p->q_mutex));*/
 
 		// obtain ownership of the mutex
 		//WaitForSingleObject(p->q_mutex, INFINITE);
